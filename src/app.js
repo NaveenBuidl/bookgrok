@@ -88,6 +88,7 @@ function buildTrackCard(track, sessions) {
           <div class="card-actions">
             <span class="price">${escapeHtml(track.price)}</span>
             <div class="btn-group">
+              <a class="btn-preview" href="/access/?track=${escapeHtml(track.id)}&preview=1">See sessions</a>
               ${shareBtn}
               ${registerBtn}
             </div>

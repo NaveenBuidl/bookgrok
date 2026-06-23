@@ -5,6 +5,10 @@ function getTrackIdFromUrl() {
   return new URLSearchParams(window.location.search).get("track") || "";
 }
 
+function isPreviewMode() {
+  return new URLSearchParams(window.location.search).get("preview") === "1";
+}
+
 function renderAccessPage(tracks, sessions) {
   const trackId = getTrackIdFromUrl();
   const main = document.getElementById("main");
@@ -33,7 +37,7 @@ function renderAccessPage(tracks, sessions) {
   document.title = `${track.title} — BookGrok`;
 
   main.innerHTML =
-    buildAccessNotice() +
+    buildAccessNotice(track) +
     buildTopActions(track) +
     buildSessionTable(trackSessions, track) +
     buildCommunityBlock(track);
@@ -41,7 +45,14 @@ function renderAccessPage(tracks, sessions) {
   initShareButtons([track]);
 }
 
-function buildAccessNotice() {
+function buildAccessNotice(track) {
+  if (isPreviewMode()) {
+    const registerUrl = (track && isValidUrl(track.formUrl)) ? track.formUrl : "#";
+    return `<div class="preview-banner">
+      <span>Register to unlock your Join links, calendar, and cohort discussion.</span>
+      <a href="${registerUrl}" target="_blank" rel="noopener">Register — $9</a>
+    </div>`;
+  }
   return `<div class="access-notice">You are registered. Bookmark this page — it has your Join links, calendar buttons, and cohort discussion.</div>`;
 }
 
@@ -60,12 +71,16 @@ function buildSessionTable(trackSessions, track) {
   const hasHomework = isValidUrl(track.homeworkFormUrl);
   const rows = trackSessions.map(s => {
     const calUrl = buildCalUrl(s);
-    const joinBtn = isValidUrl(s.meetLink)
-      ? `<a class="btn-join" href="${s.meetLink}" target="_blank" rel="noopener">Join</a>` : "";
-    const calBtn = calUrl !== "#"
-      ? `<a class="btn-cal" href="${calUrl}" target="_blank" rel="noopener">+ Calendar</a>` : "";
-    const hwBtn = hasHomework
-      ? `<a class="btn-hw" href="${track.homeworkFormUrl}" target="_blank" rel="noopener">Submit HW</a>` : "";
+    const preview = isPreviewMode();
+    const calBtn = preview
+      ? `<span class="btn-locked">+ Calendar</span>`
+      : (calUrl !== "#" ? `<a class="btn-cal" href="${calUrl}" target="_blank" rel="noopener">+ Calendar</a>` : "");
+    const joinBtn = preview
+      ? `<span class="btn-locked">Join</span>`
+      : (isValidUrl(s.meetLink) ? `<a class="btn-join" href="${s.meetLink}" target="_blank" rel="noopener">Join</a>` : "");
+    const hwBtn = preview
+      ? `<span class="btn-locked">Submit HW</span>`
+      : (hasHomework ? `<a class="btn-hw" href="${track.homeworkFormUrl}" target="_blank" rel="noopener">Submit HW</a>` : "");
     return `
       <tr>
         <td class="col-session">Session ${escapeHtml(s.number)}</td>
