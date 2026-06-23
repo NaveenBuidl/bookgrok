@@ -77,11 +77,15 @@ a { color: inherit; }
 
 .image-wrap {
   position: relative; background: #ede5d8; display: flex;
-  align-items: center; justify-content: center; padding: 32px 20px; min-height: 240px;
+  align-items: center; justify-content: center; padding: 32px 20px; min-height: 320px;
 }
 .book-cover {
-  height: 190px; width: 126px; object-fit: cover; border-radius: 5px;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.28); display: block;
+  height: 260px;
+  width: 174px;
+  object-fit: cover;
+  border-radius: 5px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.28);
+  display: block;
 }
 .book-cover-fallback {
   height: 190px; width: 126px; background: #c9bfaf; border-radius: 5px;
