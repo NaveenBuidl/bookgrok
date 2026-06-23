@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="BookGrok — live book tracks hosted by serious readers. A small cohort, a structured schedule, and a host who gets you to the end." />
+  <meta name="description" content="BookGrok — get through the dense, demanding books you keep meaning to read. A small cohort, a host, one chapter at a time." />
   <title>BookGrok</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -12,22 +12,28 @@
   <header class="site-header">
     <p class="wordmark">BookGrok</p>
     <h1 class="site-headline">Most serious books never get finished.</h1>
-    <p class="site-subhead">BookGrok brings together a small cohort, a host who has read seriously, and a chapter-by-chapter structure that gets you to the end.</p>
+    <p class="site-subhead">BookGrok brings together a small cohort, a host who has read seriously, and a chapter-by-chapter structure that gets you through the books that matter — the dense, demanding ones you keep meaning to read.</p>
   </header>
 
-  <main id="main" class="main-content">
-    <!-- Track cards rendered by app.js -->
-  </main>
+  <div class="search-wrap">
+    <input
+      id="search-input"
+      class="search-input"
+      type="search"
+      placeholder="Search by title, author, or topic…"
+      autocomplete="off"
+      aria-label="Search book tracks" />
+  </div>
 
-  <footer class="site-footer">
-    <p>BookGrok &copy; 2026</p>
-  </footer>
+  <main id="main" class="main-content"></main>
 
-  <!-- PapaParse from CDN -->
+  <footer class="site-footer"><p>BookGrok &copy; 2026</p></footer>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <!-- BookGrok scripts -->
   <script src="src/config.js"></script>
   <script src="src/data.js"></script>
+  <script src="src/share.js"></script>
+  <script src="src/search.js"></script>
   <script src="src/app.js"></script>
 
 </body>

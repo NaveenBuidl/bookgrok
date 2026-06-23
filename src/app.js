@@ -1,6 +1,6 @@
 // BookGrok homepage render logic
-// Runs on index.html
-// NEVER renders Meet links, Calendar links, homework URLs, Slack links, or access page URLs
+// Renders: headline, "Open now" featured tracks, "Full library" rest.
+// Per card: Register + Share only. NEVER Meet/Calendar/Homework/Slack/access/Buy.
 
 function renderHomepage(tracks, sessions) {
   const main = document.getElementById("main");
@@ -11,7 +11,30 @@ function renderHomepage(tracks, sessions) {
     return;
   }
 
-  main.innerHTML = tracks.map(track => buildTrackCard(track, sessions)).join("");
+  const featuredCount = (CONFIG && CONFIG.featuredCount) || 6;
+  const featured = tracks.slice(0, featuredCount);
+  const library = tracks.slice(featuredCount);
+
+  let html = "";
+
+  html += `<section class="track-section">
+    <p class="section-eyebrow">Open now</p>
+    <div class="track-list">
+      ${featured.map(t => buildTrackCard(t, sessions)).join("")}
+    </div>
+  </section>`;
+
+  if (library.length > 0) {
+    html += `<section class="track-section">
+      <p class="section-eyebrow">Full library</p>
+      <div class="track-list">
+        ${library.map(t => buildTrackCard(t, sessions)).join("")}
+      </div>
+    </section>`;
+  }
+
+  main.innerHTML = html;
+  initShareButtons(tracks);
 }
 
 function buildTrackCard(track, sessions) {
@@ -19,7 +42,6 @@ function buildTrackCard(track, sessions) {
   const startDate = firstSession ? formatLocalDate(firstSession.datetimeUTC) : "";
   const pct = spotsPercent(track);
 
-  // Image: use src only if valid URL, else show initials fallback
   const coverImg = isValidUrl(track.bookCoverUrl)
     ? `<img class="book-cover" src="${track.bookCoverUrl}" alt="${escapeHtml(track.title)} cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
     : "";
@@ -29,31 +51,33 @@ function buildTrackCard(track, sessions) {
     ? `<img class="host-photo" src="${track.hostPhotoUrl}" alt="${escapeHtml(track.host)}" onerror="this.style.display='none'">`
     : `<div class="host-photo host-photo-fallback">${escapeHtml(track.host.charAt(0))}</div>`;
 
-  const buyBtn = isValidUrl(track.buyBookUrl)
-    ? `<a class="btn-secondary" href="${track.buyBookUrl}" target="_blank" rel="noopener">Buy the book</a>`
-    : "";
-
   const registerBtn = isValidUrl(track.formUrl)
     ? `<a class="btn-primary" href="${track.formUrl}" target="_blank" rel="noopener">Register</a>`
     : "";
 
+  const shareBtn = `<button class="btn-share" type="button" data-share-track="${escapeHtml(track.id)}">Share</button>`;
+
+  const category = track.category
+    ? `<p class="track-category">${escapeHtml(track.category)}</p>` : "";
+
   return `
-    <article class="card">
+    <article class="card" id="track-${escapeHtml(track.id)}">
       <div class="card-top">
         <div class="image-wrap">
           ${coverImg}${coverFallback}
           ${hostImg}
         </div>
         <div class="card-meta">
+          ${category}
           <h2 class="track-title">${escapeHtml(track.title)}</h2>
           <p class="track-author">${escapeHtml(track.author)}</p>
           <p class="host-line">Hosted by <strong>${escapeHtml(track.host)}</strong></p>
           <p class="host-role">${escapeHtml(track.hostRole)}</p>
           <div class="track-details">
-            <span class="detail-item">${escapeHtml(track.sessionCount)} sessions</span>
+            <span>${escapeHtml(track.sessionCount)} sessions</span>
             <span class="detail-sep">·</span>
-            <span class="detail-item">${escapeHtml(track.cadence)}</span>
-            ${startDate ? `<span class="detail-sep">·</span><span class="detail-item">Starts ${startDate}</span>` : ""}
+            <span>${escapeHtml(track.cadence)}</span>
+            ${startDate ? `<span class="detail-sep">·</span><span>Starts ${startDate}</span>` : ""}
           </div>
           <div class="spots">
             <span class="spots-label">${escapeHtml(track.spotsLeft)} of ${escapeHtml(track.spotsTotal)} spots left</span>
@@ -64,7 +88,7 @@ function buildTrackCard(track, sessions) {
           <div class="card-actions">
             <span class="price">${escapeHtml(track.price)}</span>
             <div class="btn-group">
-              ${buyBtn}
+              ${shareBtn}
               ${registerBtn}
             </div>
           </div>
@@ -74,20 +98,14 @@ function buildTrackCard(track, sessions) {
   `;
 }
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
-
 (async function init() {
   const main = document.getElementById("main");
-
-  // Show loading state
   if (main) main.innerHTML = `<p class="loading-state">Loading tracks…</p>`;
-
   try {
     const { tracks, sessions } = await loadData();
     renderHomepage(tracks, sessions);
+    initSearch(tracks, sessions);
   } catch (err) {
-    if (main) {
-      main.innerHTML = `<p class="error-state">Could not load tracks. Please refresh the page.<br><small>${escapeHtml(err.message || "")}</small></p>`;
-    }
+    if (main) main.innerHTML = `<p class="error-state">Could not load tracks. Please refresh.<br><small>${escapeHtml(err.message || "")}</small></p>`;
   }
 })();

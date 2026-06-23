@@ -1,8 +1,5 @@
-// BookGrok data layer
-// Fetches and parses CSV data using PapaParse
-// All CSV values are escaped/validated before use
-
-// ─── Utilities ───────────────────────────────────────────────────────────────
+// BookGrok data layer — fetch, parse, validate CSV data with PapaParse
+// All CSV values escaped/validated before use
 
 function escapeHtml(str) {
   if (!str) return "";
@@ -16,19 +13,17 @@ function escapeHtml(str) {
 
 function isValidUrl(url) {
   if (!url || typeof url !== "string") return false;
-  const trimmed = url.trim();
-  return trimmed.startsWith("https://") || trimmed.startsWith("http://");
+  const t = url.trim();
+  return t.startsWith("https://") || t.startsWith("http://");
 }
 
 function trimRow(row) {
-  const trimmed = {};
-  for (const [key, val] of Object.entries(row)) {
-    trimmed[key.trim()] = typeof val === "string" ? val.trim() : val;
+  const out = {};
+  for (const [k, v] of Object.entries(row)) {
+    out[k.trim()] = typeof v === "string" ? v.trim() : v;
   }
-  return trimmed;
+  return out;
 }
-
-// ─── CSV Fetcher ──────────────────────────────────────────────────────────────
 
 function fetchCsv(url) {
   return new Promise((resolve, reject) => {
@@ -39,54 +34,35 @@ function fetchCsv(url) {
       dynamicTyping: false,
       complete: (results) => {
         const rows = results.data.map(trimRow);
-        rows.forEach((row, i) => {
-          // Normalize status to lowercase
-          if (row.status) row.status = row.status.toLowerCase();
-        });
+        rows.forEach(r => { if (r.status) r.status = r.status.toLowerCase(); });
         resolve(rows);
       },
-      error: (err) => {
-        console.error("CSV parse error:", url, err);
-        reject(err);
-      }
+      error: (err) => { console.error("CSV parse error:", url, err); reject(err); }
     });
   });
 }
 
-// ─── Data Accessors ───────────────────────────────────────────────────────────
-
 async function loadData() {
-  try {
-    const [rawTracks, rawSessions] = await Promise.all([
-      fetchCsv(CONFIG.tracksCsvUrl),
-      fetchCsv(CONFIG.sessionsCsvUrl)
-    ]);
+  const [rawTracks, rawSessions] = await Promise.all([
+    fetchCsv(CONFIG.tracksCsvUrl),
+    fetchCsv(CONFIG.sessionsCsvUrl)
+  ]);
 
-    // Validate and warn
-    rawTracks.forEach((row, i) => {
-      if (!row.id) console.warn(`tracks row ${i + 2}: missing id`);
-    });
-    rawSessions.forEach((row, i) => {
-      if (!row.trackId) console.warn(`sessions row ${i + 2}: missing trackId`);
-    });
+  rawTracks.forEach((r, i) => { if (!r.id) console.warn(`tracks row ${i + 2}: missing id`); });
+  rawSessions.forEach((r, i) => { if (!r.trackId) console.warn(`sessions row ${i + 2}: missing trackId`); });
 
-    const tracks = rawTracks.filter(t => t.id && t.status === "published");
-    const sessions = rawSessions.filter(s => s.trackId && s.status === "published");
+  const tracks = rawTracks
+    .filter(t => t.id && t.status === "published")
+    .sort((a, b) => parseInt(a.sortOrder, 10) - parseInt(b.sortOrder, 10));
 
-    // Sort tracks by sortOrder ascending
-    tracks.sort((a, b) => parseInt(a.sortOrder, 10) - parseInt(b.sortOrder, 10));
-
-    // Sort sessions by trackId then number
-    sessions.sort((a, b) => {
+  const sessions = rawSessions
+    .filter(s => s.trackId && s.status === "published")
+    .sort((a, b) => {
       if (a.trackId !== b.trackId) return a.trackId.localeCompare(b.trackId);
       return parseInt(a.number, 10) - parseInt(b.number, 10);
     });
 
-    return { tracks, sessions };
-  } catch (err) {
-    console.error("Failed to load data:", err);
-    throw err;
-  }
+  return { tracks, sessions };
 }
 
 function getSessionsForTrack(sessions, trackId) {
@@ -94,56 +70,36 @@ function getSessionsForTrack(sessions, trackId) {
 }
 
 function getFirstSession(sessions, trackId) {
-  const trackSessions = getSessionsForTrack(sessions, trackId);
-  return trackSessions.length > 0 ? trackSessions[0] : null;
+  const t = getSessionsForTrack(sessions, trackId);
+  return t.length ? t[0] : null;
 }
-
-// ─── Formatters ───────────────────────────────────────────────────────────────
 
 function formatLocalDatetime(utcString) {
   if (!utcString) return "";
   try {
-    const date = new Date(utcString);
-    return date.toLocaleString(undefined, {
-      weekday: "short",
-      day: "numeric",
-      month: "long",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZoneName: "short"
+    return new Date(utcString).toLocaleString(undefined, {
+      weekday: "short", day: "numeric", month: "long",
+      hour: "2-digit", minute: "2-digit", timeZoneName: "short"
     });
-  } catch (e) {
-    console.warn("Invalid date:", utcString);
-    return utcString;
-  }
+  } catch (e) { console.warn("Invalid date:", utcString); return utcString; }
 }
 
 function formatLocalDate(utcString) {
   if (!utcString) return "";
   try {
-    const date = new Date(utcString);
-    return date.toLocaleDateString(undefined, {
-      day: "numeric",
-      month: "long",
-      year: "numeric"
+    return new Date(utcString).toLocaleDateString(undefined, {
+      day: "numeric", month: "long", year: "numeric"
     });
-  } catch (e) {
-    return utcString;
-  }
+  } catch (e) { return utcString; }
 }
 
 function buildCalUrl(session) {
   try {
     const start = new Date(session.datetimeUTC);
     const end = new Date(start.getTime() + parseInt(session.durationMins, 10) * 60000);
-
-    function toCalFmt(d) {
-      return d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-    }
-
+    const toCalFmt = d => d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
     const details = escapeHtml(session.calDescription) +
       (isValidUrl(session.meetLink) ? " Join: " + session.meetLink : "");
-
     const params = new URLSearchParams({
       action: "TEMPLATE",
       text: session.calTitle || "",
@@ -151,19 +107,12 @@ function buildCalUrl(session) {
       details: details,
       location: isValidUrl(session.meetLink) ? session.meetLink : ""
     });
-
     return "https://calendar.google.com/calendar/render?" + params.toString();
-  } catch (e) {
-    console.warn("buildCalUrl error:", e);
-    return "#";
-  }
+  } catch (e) { console.warn("buildCalUrl error:", e); return "#"; }
 }
-
-// ─── Spots bar ────────────────────────────────────────────────────────────────
 
 function spotsPercent(track) {
   const total = parseInt(track.spotsTotal, 10) || 8;
   const left = parseInt(track.spotsLeft, 10) || 0;
-  const filled = total - left;
-  return Math.round((filled / total) * 100);
+  return Math.round(((total - left) / total) * 100);
 }

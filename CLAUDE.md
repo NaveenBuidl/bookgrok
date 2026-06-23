@@ -1,52 +1,50 @@
-# BookGrok Mock v8.3 — Claude Code Instructions
+# BookGrok Mock v8.4 — Claude Code Instructions
 
-Read docs/bookgrok_v8_3_claudecode_handoff.md before writing any code.
+Read docs/bookgrok_v8_4_claudecode_handoff.md and docs/bookgrok_data_model_v8_4.md before writing any code.
+
+## What v8.4 changes from v8.3
+
+- Homepage cards: Register + Share only. NO "Buy the book" on homepage (it stays on access page).
+- Pricing: flat `$9` everywhere. No euros.
+- New `hostLinkedIn` field: stored, NOT rendered as a link in v8.4 (feature-flagged).
+- New Share control on homepage cards and access page: copies public track URL + mailto. See src/share.js.
+- Homepage splits tracks into "Open now" (first CONFIG.featuredCount) and "Full library" (rest).
+- 30 curated dense-nonfiction tracks in samples/tracks_sample.csv.
 
 ## Hard constraints
 
-- Static HTML/CSS/JS only.
-- No React, Vue, Next.js, Vite, or any frontend framework.
-- No Supabase, Firebase, backend, API routes, or server-side code.
-- No auth or login of any kind.
-- No real payment.
-- No Luma, Circle, or third-party community platforms.
-- No Slack API automation.
-- No Google Sheets authenticated API — use published CSV URLs only.
-- No Google Drive API upload.
-- No admin dashboard.
+- Static HTML/CSS/JS only. No React, Vue, Next, Vite, framework.
+- No Supabase, Firebase, backend, API routes, server code.
+- No auth, no real payment.
+- No Luma, Circle, Slack API, Google API auth.
+- Use published Google Sheets CSV URLs only.
 
 ## Data
 
-- Use PapaParse for CSV parsing. Never write a naive CSV parser.
-- Start with local sample CSVs in `samples/`. Do not connect Google Sheets until local build works.
-- Trim all header names and values after parsing.
-- Normalize `status` to lowercase.
-- Skip empty rows.
+- PapaParse only. Trim headers/values. Lowercase status. Skip empty rows.
+- CSV paths in config.js MUST be absolute (/samples/...) so /access/ resolves from root.
 
 ## Security
 
-- Validate all URLs before rendering. Accept only `http://` and `https://`. Hide buttons if URL is blank or invalid.
-- Escape all CSV-derived text before DOM insertion. Use `textContent` for text nodes.
-- Never inject raw CSV content into `innerHTML` directly.
-- Never render `javascript:` URLs.
+- Validate URLs (http/https only). Hide element if blank/invalid.
+- Escape all CSV text before DOM insertion. No raw innerHTML of CSV content.
+- Never render javascript: URLs.
 
 ## Access gating
 
-- Homepage must NEVER render: Meet links, Calendar links (they contain Meet links), access page URLs, homework form URLs, or Slack links.
-- Access page may render: Join links, Calendar buttons, Submit HW button, community block.
-- This is simulated gating by URL obscurity. Do not describe it as secure.
+- Homepage NEVER shows: Meet links, Calendar links, homework URLs, Slack links, access URL, Buy book, hostLinkedIn link.
+- Access page may show: Join, Calendar, Submit HW, community block, Buy book, Share.
 
 ## Build order
 
-1. Produce an implementation plan first. Get approval before writing code.
+1. Plan first (Plan mode). Get approval before code.
 2. Build Stage 1 with local sample CSVs.
-3. Only wire Google Sheets after Stage 1 passes local testing.
+3. Wire Google Sheets only after Stage 1 passes.
 
-## Local testing command
+## Local test
 
-```bash
+```
 python -m http.server 8000
 ```
-
-Homepage: `http://localhost:8000`
-Access page: `http://localhost:8000/access/?track=nexus`
+Homepage: http://localhost:8000
+Access: http://localhost:8000/access/?track=nexus
