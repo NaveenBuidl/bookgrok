@@ -11,7 +11,7 @@ function renderHomepage(tracks, sessions) {
     return;
   }
 
-  const featuredCount = (CONFIG && CONFIG.featuredCount) || 6;
+  const featuredCount = parseInt((CONFIG && CONFIG.featuredCount) || 6, 10) || 6;
   const featured = tracks.slice(0, featuredCount);
   const library = tracks.slice(featuredCount);
 

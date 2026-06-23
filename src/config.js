@@ -3,8 +3,8 @@
 // Stage 2: replace with published Google Sheets CSV URLs
 
 const CONFIG = {
-  tracksCsvUrl: "/samples/tracks_sample.csv",
-  sessionsCsvUrl: "/samples/sessions_sample.csv",
+  tracksCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSKtYmvCbI9Yb88gVgC3HyyBT-C6IfVAtAPY-OaP9jokwkvNpxV_wuOmIRztO080l_Lkf-au4-Cjddc/pub?gid=0&single=true&output=csv",
+  sessionsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSKtYmvCbI9Yb88gVgC3HyyBT-C6IfVAtAPY-OaP9jokwkvNpxV_wuOmIRztO080l_Lkf-au4-Cjddc/pub?gid=668627981&single=true&output=csv",
   featuredCount: 6,  // "Open now" section size; rest go to "Full library"
   requestBookUrl: "https://forms.gle/REPLACE_REQUEST_BOOK_FORM"  // "Request a book" Google Form
 };

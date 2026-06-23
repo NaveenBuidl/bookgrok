@@ -53,7 +53,11 @@ async function loadData() {
 
   const tracks = rawTracks
     .filter(t => t.id && t.status === "published")
-    .sort((a, b) => parseInt(a.sortOrder, 10) - parseInt(b.sortOrder, 10));
+    .sort((a, b) => {
+      const aOrder = parseInt(a.sortOrder, 10) || 999;
+      const bOrder = parseInt(b.sortOrder, 10) || 999;
+      return aOrder - bOrder;
+    });
 
   const sessions = rawSessions
     .filter(s => s.trackId && s.status === "published")
