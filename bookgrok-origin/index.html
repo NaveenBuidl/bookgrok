@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Why BookGrok Exists</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:        #1a1a1a;
+      --ink-mid:    #444;
+      --ink-soft:   #777;
+      --rule:       #e2e2e2;
+      --bg:         #fafaf8;
+      --accent:     #2d5016;
+      --accent-dim: #e8f0e0;
+      --max-w:      640px;
+    }
+
+    html { font-size: 17px; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Inter', system-ui, sans-serif;
+      line-height: 1.7;
+      padding: 64px 24px 120px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page {
+      max-width: var(--max-w);
+      margin: 0 auto;
+    }
+
+    /* Back link */
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-soft);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      margin-bottom: 64px;
+      transition: color 0.15s;
+    }
+    .back:hover { color: var(--accent); }
+    .back svg { flex-shrink: 0; }
+
+    /* Eyebrow */
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    /* Title */
+    h1 {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      font-weight: 400;
+      line-height: 1.15;
+      color: var(--ink);
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+    h1 em {
+      font-style: italic;
+      color: var(--ink-mid);
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--ink-soft);
+      margin-bottom: 56px;
+      line-height: 1.5;
+    }
+
+    /* Rule */
+    hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 48px 0;
+    }
+
+    /* Sections */
+    .section {
+      margin-bottom: 48px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 14px;
+    }
+
+    .section h2 {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: clamp(1.3rem, 3vw, 1.6rem);
+      font-weight: 400;
+      line-height: 1.2;
+      color: var(--ink);
+      margin-bottom: 18px;
+      letter-spacing: -0.01em;
+    }
+
+    .section p {
+      font-size: 1rem;
+      color: var(--ink-mid);
+      line-height: 1.75;
+      margin-bottom: 16px;
+    }
+    .section p:last-child { margin-bottom: 0; }
+
+    /* Highlight pull */
+    .pull {
+      border-left: 2px solid var(--accent);
+      padding: 14px 20px;
+      margin: 28px 0;
+      background: var(--accent-dim);
+      border-radius: 0 4px 4px 0;
+    }
+    .pull p {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 1.05rem;
+      font-style: italic;
+      color: var(--ink);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    /* CTA */
+    .cta-block {
+      margin-top: 56px;
+      padding-top: 40px;
+      border-top: 1px solid var(--rule);
+    }
+
+    .cta-block p {
+      font-size: 15px;
+      color: var(--ink-soft);
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      padding: 12px 24px;
+      border-radius: 4px;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+
+    @media (max-width: 520px) {
+      body { padding: 40px 20px 80px; }
+      .back { margin-bottom: 40px; }
+      h1 { margin-bottom: 10px; }
+      .subtitle { margin-bottom: 40px; }
+      hr { margin: 36px 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .back, .btn { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <a class="back" href="https://bookgrok.mandava.in">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8.5 2.5L4 7l4.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      BookGrok
+    </a>
+
+    <p class="eyebrow">Why BookGrok Exists</p>
+    <h1>Dense books fail <em>quietly.</em></h1>
+    <p class="subtitle">A note on the problem, the method, and what finishing actually means.</p>
+
+    <hr />
+
+    <div class="section">
+      <p class="section-label">The Problem</p>
+      <h2>Solo reading has no recovery mechanism for comprehension debt.</h2>
+      <p>You start strong, hit a section that doesn't quite land, push through assuming it'll click later — and it doesn't. The gap compounds. By chapter four you're reading words but not building meaning. Then you stop.</p>
+      <p>This isn't a motivation problem. It's a structural one. There's no one to tell you where you actually fell behind, and no reason to show up tomorrow.</p>
+      <div class="pull">
+        <p>Comprehension debt is silent. By the time you notice it, you've already stopped.</p>
+      </div>
+    </div>
+
+    <hr />
+
+    <div class="section">
+      <p class="section-label">The Method</p>
+      <h2>A small cohort. Chapter by chapter. A host who has prepared — not an expert.</h2>
+      <p>BookGrok runs a small cohort through a book, chapter by chapter, with a host for each session. The host doesn't need to be the expert — they need to have prepared enough to present the chapter's core argument and admit openly what they don't understand.</p>
+      <p>That admission consistently unlocks the room. Practitioners in the cohort have seen the concept in the wild, and they fill the gap in a way no single expert could. The facilitator's job is attention management: what deserves time, what to skip, where the book's actual argument lives.</p>
+      <p>Chapter by chapter, the argument gets built in the room — not just read.</p>
+    </div>
+
+    <hr />
+
+    <div class="section">
+      <p class="section-label">What You Leave With</p>
+      <h2>The book's argument as usable thinking, not a memory of having read something.</h2>
+      <p>Finishing is the mechanism, not the point. What you leave with is the book's argument — sequenced, stress-tested against other people's real experience — sitting in your head as usable thinking.</p>
+      <p>That's a different thing from finishing a book alone. Most people who do that can tell you the book existed. BookGrok members can tell you what the book said and where it broke down when they tried to use it.</p>
+      <div class="pull">
+        <p>Sentences, not summaries. The book's argument, not a memory of having read it.</p>
+      </div>
+    </div>
+
+    <div class="cta-block">
+      <p>See what's currently open for registration.</p>
+      <a class="btn" href="https://bookgrok.mandava.in">Browse open tracks →</a>
+    </div>
+
+  </div>
+</body>
+</html>
