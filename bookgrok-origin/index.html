@@ -81,8 +81,19 @@
     .subtitle {
       font-size: 15px;
       color: var(--ink-soft);
-      margin-bottom: 56px;
+      margin-bottom: 10px;
       line-height: 1.5;
+    }
+
+    .byline {
+      font-size: 13px;
+      color: var(--ink-soft);
+      margin-bottom: 56px;
+      letter-spacing: 0.01em;
+    }
+    .byline span {
+      color: var(--ink-mid);
+      font-weight: 500;
     }
 
     /* Rule */
@@ -141,10 +152,28 @@
       margin: 0;
     }
 
+    /* Author sign-off */
+    .author-block {
+      margin-top: 56px;
+      padding-top: 36px;
+      border-top: 1px solid var(--rule);
+      margin-bottom: 40px;
+    }
+    .author-block p {
+      font-size: 14px;
+      color: var(--ink-soft);
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+    .author-name {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--ink-mid);
+    }
+
     /* CTA */
     .cta-block {
-      margin-top: 56px;
-      padding-top: 40px;
+      padding-top: 32px;
       border-top: 1px solid var(--rule);
     }
 
@@ -172,7 +201,7 @@
       body { padding: 40px 20px 80px; }
       .back { margin-bottom: 40px; }
       h1 { margin-bottom: 10px; }
-      .subtitle { margin-bottom: 40px; }
+      .byline { margin-bottom: 40px; }
       hr { margin: 36px 0; }
     }
 
@@ -193,15 +222,16 @@
 
     <p class="eyebrow">Why BookGrok Exists</p>
     <h1>Dense books fail <em>quietly.</em></h1>
-    <p class="subtitle">A note on the problem, the method, and what finishing actually means.</p>
+    <p class="subtitle">On the problem, the method, and what finishing actually means.</p>
+    <p class="byline">By <span>Naveen Mandava</span></p>
 
     <hr />
 
     <div class="section">
       <p class="section-label">The Problem</p>
       <h2>Solo reading has no recovery mechanism for comprehension debt.</h2>
-      <p>You start strong, hit a section that doesn't quite land, push through assuming it'll click later — and it doesn't. The gap compounds. By chapter four you're reading words but not building meaning. Then you stop.</p>
-      <p>This isn't a motivation problem. It's a structural one. There's no one to tell you where you actually fell behind, and no reason to show up tomorrow.</p>
+      <p>I kept watching the same pattern: people start a hard book with genuine intent, hit a section that doesn't quite land, push through assuming it'll click later. It doesn't. The gap compounds. By chapter four they're reading words but not building meaning. Then they stop.</p>
+      <p>It's not a motivation problem. It's structural. When you read alone, there's no one to tell you where you actually fell behind, and no external reason to show up the next day. The book just sits there.</p>
       <div class="pull">
         <p>Comprehension debt is silent. By the time you notice it, you've already stopped.</p>
       </div>
@@ -211,10 +241,10 @@
 
     <div class="section">
       <p class="section-label">The Method</p>
-      <h2>A small cohort. Chapter by chapter. A host who has prepared — not an expert.</h2>
-      <p>BookGrok runs a small cohort through a book, chapter by chapter, with a host for each session. The host doesn't need to be the expert — they need to have prepared enough to present the chapter's core argument and admit openly what they don't understand.</p>
-      <p>That admission consistently unlocks the room. Practitioners in the cohort have seen the concept in the wild, and they fill the gap in a way no single expert could. The facilitator's job is attention management: what deserves time, what to skip, where the book's actual argument lives.</p>
-      <p>Chapter by chapter, the argument gets built in the room — not just read.</p>
+      <h2>A small cohort, chapter by chapter, with a host who has prepared rather than one who already knows.</h2>
+      <p>The structure I settled on: a small cohort moves through a book together, one chapter per session, with a rotating host. The host's job isn't to be the expert. It's to have prepared well enough to present the chapter's core argument and to say out loud what they didn't understand.</p>
+      <p>That admission consistently unlocks the room. Practitioners in the cohort have seen the concept in the wild. They fill the gap in a way no single expert could have, because they bring the specific contexts where the idea worked and where it didn't. The facilitator manages attention: what deserves time, what to skip, where the book's actual argument lives versus where it's restating itself.</p>
+      <p>Chapter by chapter, the argument gets built in the room. Not just read.</p>
     </div>
 
     <hr />
@@ -222,16 +252,21 @@
     <div class="section">
       <p class="section-label">What You Leave With</p>
       <h2>The book's argument as usable thinking, not a memory of having read something.</h2>
-      <p>Finishing is the mechanism, not the point. What you leave with is the book's argument — sequenced, stress-tested against other people's real experience — sitting in your head as usable thinking.</p>
-      <p>That's a different thing from finishing a book alone. Most people who do that can tell you the book existed. BookGrok members can tell you what the book said and where it broke down when they tried to use it.</p>
+      <p>Finishing is the mechanism, not the point. What I want people to leave with is the book's argument sequenced in their head, stress-tested against other people's real experience, sitting there as something they can actually reach for. That's different from finishing a book alone.</p>
+      <p>Most people who finish alone can tell you the book existed. BookGrok members can tell you what the book said and where it broke down when they tried to use it.</p>
       <div class="pull">
         <p>Sentences, not summaries. The book's argument, not a memory of having read it.</p>
       </div>
     </div>
 
+    <div class="author-block">
+      <p>I'm building BookGrok because I kept buying books I never finished and running sessions that showed me finishing is a solvable problem when the structure is right.</p>
+      <p class="author-name">Naveen Mandava</p>
+    </div>
+
     <div class="cta-block">
       <p>See what's currently open for registration.</p>
-      <a class="btn" href="https://bookgrok.mandava.in">Browse open tracks →</a>
+      <a class="btn" href="https://bookgrok.mandava.in">Browse open tracks &#8594;</a>
     </div>
 
   </div>
