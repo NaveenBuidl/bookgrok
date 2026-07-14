@@ -38,11 +38,14 @@ async function copyTrackLink(trackId, buttonEl) {
 
 function flashCopied(buttonEl) {
   if (!buttonEl) return;
-  const original = buttonEl.textContent;
+  const original = buttonEl.innerHTML;
+  const originalLabel = buttonEl.getAttribute("aria-label");
   buttonEl.textContent = "Link copied";
+  buttonEl.setAttribute("aria-label", "Link copied");
   buttonEl.classList.add("is-copied");
   setTimeout(() => {
-    buttonEl.textContent = original;
+    buttonEl.innerHTML = original;
+    if (originalLabel) buttonEl.setAttribute("aria-label", originalLabel);
     buttonEl.classList.remove("is-copied");
   }, 1600);
 }
