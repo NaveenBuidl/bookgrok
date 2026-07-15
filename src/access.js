@@ -108,7 +108,9 @@ function buildCommunityBlock(track) {
     ? `<span class="community-channel">${escapeHtml(track.communityChannelName)}</span>` : "";
   let content = "";
   if (isValidUrl(track.communityUrl)) {
-    content = `<a class="btn-secondary" href="${track.communityUrl}" target="_blank" rel="noopener">Join cohort discussion</a>`;
+    content = isPreviewMode()
+      ? `<span class="btn-locked">Join cohort discussion</span>`
+      : `<a class="btn-secondary" href="${track.communityUrl}" target="_blank" rel="noopener">Join cohort discussion</a>`;
   } else if (track.communityInstructions) {
     content = `<p class="community-instructions">${escapeHtml(track.communityInstructions)}</p>`;
   }

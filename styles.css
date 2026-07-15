@@ -62,7 +62,11 @@ a { color: inherit; }
   text-transform: uppercase; letter-spacing: 0.1em; color: #b45309;
 }
 
-.track-list { display: flex; flex-direction: column; gap: 24px; }
+.track-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+  gap: 20px;
+}
 
 /* Card */
 
@@ -70,6 +74,7 @@ a { color: inherit; }
   background: #fff; border: 1px solid #e2d9cc; border-radius: 18px;
   overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.05);
   transition: box-shadow 0.2s ease; scroll-margin-top: 24px;
+  max-width: 580px; width: 100%; margin: 0 auto;
 }
 .card:hover { box-shadow: 0 8px 28px rgba(0,0,0,0.09); }
 
@@ -236,6 +241,8 @@ a { color: inherit; }
 /* Responsive */
 
 @media (max-width: 780px) {
+  .track-list { grid-template-columns: 1fr; }
+  .card { max-width: none; }
   .card-head { grid-template-columns: 1fr; }
   .sessions-section, .community-section { padding: 16px 12px; }
 

@@ -25,7 +25,7 @@ function trimRow(row) {
   return out;
 }
 
-function fetchCsv(url) {
+function fetchCsvOnce(url) {
   return new Promise((resolve, reject) => {
     Papa.parse(url, {
       download: true,
@@ -37,9 +37,24 @@ function fetchCsv(url) {
         rows.forEach(r => { if (r.status) r.status = r.status.toLowerCase(); });
         resolve(rows);
       },
-      error: (err) => { console.error("CSV parse error:", url, err); reject(err); }
+      error: (err) => reject(err)
     });
   });
+}
+
+async function fetchCsv(url) {
+  try {
+    return await fetchCsvOnce(url);
+  } catch (err) {
+    console.warn("CSV fetch failed, retrying once:", url, err);
+    await new Promise(r => setTimeout(r, 1000));
+    try {
+      return await fetchCsvOnce(url);
+    } catch (err2) {
+      console.error("CSV fetch failed after retry:", url, err2);
+      throw err2;
+    }
+  }
 }
 
 async function loadData() {

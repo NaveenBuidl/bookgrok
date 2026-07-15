@@ -48,3 +48,57 @@ python -m http.server 8000
 ```
 Homepage: http://localhost:8000
 Access: http://localhost:8000/access/?track=nexus
+
+## Visual verification
+
+`npm run screenshot` screenshots the site at 375px/780px/1440px into ./screenshots
+(gitignored) — no arguments needed, it starts its own server automatically.
+
+Run it whenever a change could affect layout or rendering (CSS, grid/flex,
+new components, breakpoints, images). View the PNGs before saying the change
+is done. Skip it for non-visual changes (CMS data, logic-only JS, copy edits).
+
+## Scope discipline
+
+When diagnosing a bug: state your root-cause hypothesis and confidence
+level as soon as you have one, before continuing to investigate further.
+If the evidence already explains the symptom, stop gathering more —
+proceed to propose a fix rather than seeking additional confirmation.
+
+Flaky/non-deterministic bugs (network timing, race conditions under real
+network calls) often can't be reproduced on demand — establishing a
+plausible mechanism is sufficient, don't try to force a deterministic
+repro by adding artificial throttling, retries, or escalating conditions.
+
+Match effort to stakes. Reasonable defaults:
+- Cosmetic/low-stakes bugs: fix directly, skip elaborate diagnosis.
+- Bugs with an unclear cause: diagnose enough to state a confident
+  root-cause hypothesis, then stop and either fix or ask.
+- Irreversible/high-stakes changes (data loss, security, payment,
+  anything touching CLAUDE.md's hard constraints): stop and ask before
+  proceeding, even if you're confident.
+
+If a task is taking meaningfully longer or touching more files than the
+request implied, pause and check in rather than continuing on your own
+judgment of what's warranted.
+
+Delete scratch/repro scripts you create for investigation before
+finishing a task — don't leave them in the repo.
+
+## Owner-identity steps — don't automate, ask instead
+
+Some checks require being logged into the human's own Google/Slack/etc. 
+account (not a service account, not anonymous). Recognize these BEFORE 
+attempting automation, not after failing at it:
+- Google Form Settings/Responses tabs (form owner only)
+- Slack workspace admin actions (channel privacy, invites)
+- Any "check X in your account" step
+
+When you hit one: don't search Drive/APIs looking for a workaround. 
+Instead, stop and give the human:
+1. The exact URL or menu path
+2. The exact toggle/field to check
+3. What answer you need back from them
+
+Then continue once they report back. This is faster and more reliable 
+than attempting tool-based access to authenticated owner-only surfaces.
