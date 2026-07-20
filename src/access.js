@@ -60,8 +60,10 @@ function buildTopActions(track) {
   const buy = isValidUrl(track.buyBookUrl)
     ? `<a class="btn-secondary" href="${track.buyBookUrl}" target="_blank" rel="noopener">Buy the book</a>` : "";
   const share = `<button class="btn-share" type="button" data-share-track="${escapeHtml(track.id)}">Share</button>`;
-  if (!buy && !share) return "";
-  return `<div class="top-actions">${buy}${share}</div>`;
+  const hostTools = isPreviewMode()
+    ? `<span class="btn-locked">Session tools</span>`
+    : `<a class="btn-secondary" href="../tools/session-host.html" target="_blank" rel="noopener">Session tools</a>`;
+  return `<div class="top-actions">${buy}${share}${hostTools}</div>`;
 }
 
 function buildSessionTable(trackSessions, track) {
