@@ -73,7 +73,17 @@ function badTokensIn(text) {
 async function loadPage(browser, url) {
   const page = await browser.newPage();
   const errors = [];
-  page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
+  // Image loads (book covers, host photos from Amazon/gstatic/etc.) are expected
+  // to fail sometimes and the site already has an onerror fallback for them —
+  // track their URLs so the matching console error can be excluded, without
+  // masking any other network or console failure (e.g. a broken CSV endpoint).
+  const failedImageUrls = new Set();
+  page.on('requestfailed', (req) => { if (req.resourceType() === 'image') failedImageUrls.add(req.url()); });
+  page.on('console', (msg) => {
+    if (msg.type() !== 'error') return;
+    if (failedImageUrls.has(msg.location().url)) return;
+    errors.push(msg.text());
+  });
   page.on('pageerror', (err) => { errors.push(err.message); });
   await page.goto(url, { waitUntil: 'networkidle', timeout: 15000 });
   await page.waitForTimeout(500);
