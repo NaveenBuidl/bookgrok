@@ -69,7 +69,7 @@ function buildTrackCard(track, sessions) {
     ? `<p class="track-author">${escapeHtml(track.author)}${track.pagecount ? ` · ${escapeHtml(track.pagecount)} pages` : ""}</p>` : "";
 
   const hostName = track.host
-    ? `<p class="host-name">Hosted by ${escapeHtml(track.host)}</p>` : "";
+    ? `<p class="host-name"><span class="host-name-label">Hosted by</span> ${escapeHtml(track.host)}</p>` : "";
   const hostRole = track.hostRole
     ? `<p class="host-role">${escapeHtml(track.hostRole)}</p>` : "";
   const linkedInIcon = `<svg class="linkedin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#0A66C2"/><path fill="#fff" d="M7.5 9.5h2.7v8h-2.7zM8.85 8.3a1.55 1.55 0 1 1 0-3.1 1.55 1.55 0 0 1 0 3.1zM12.5 9.5h2.6v1.1h.04c.36-.68 1.24-1.4 2.56-1.4 2.74 0 3.25 1.8 3.25 4.14v4.66h-2.7v-4.13c0-.98-.02-2.25-1.37-2.25-1.37 0-1.58 1.07-1.58 2.18v4.2h-2.7z"/></svg>`;

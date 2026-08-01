@@ -122,6 +122,7 @@ a { color: inherit; }
 }
 .host-text { display: flex; flex-direction: column; gap: 8px; }
 .host-name { margin: 0; font-size: 16px; font-weight: 700; color: #172033; }
+.host-name-label { font-weight: 400; color: #6b7280; }
 .host-role { margin: 0; font-size: 13px; color: #6b7280; }
 
 .btn-linkedin {
