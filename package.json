@@ -3,6 +3,7 @@
     "playwright": "^1.61.1"
   },
   "scripts": {
-    "screenshot": "node scripts/screenshot-check.js"
+    "screenshot": "node scripts/screenshot-check.js",
+    "smoke": "node scripts/smoke-test.js"
   }
 }

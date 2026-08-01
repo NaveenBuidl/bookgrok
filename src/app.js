@@ -45,7 +45,7 @@ function buildTrackCard(track, sessions) {
   const coverImg = isValidUrl(track.bookCoverUrl)
     ? `<img class="book-cover" src="${track.bookCoverUrl}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
     : "";
-  const coverFallback = `<div class="book-cover-fallback" style="${isValidUrl(track.bookCoverUrl) ? 'display:none' : ''}">${escapeHtml(track.title.charAt(0))}</div>`;
+  const coverFallback = `<div class="book-cover-fallback" style="${isValidUrl(track.bookCoverUrl) ? 'display:none' : ''}">${escapeHtml((track.title || "?").charAt(0))}</div>`;
 
   const hostImg = isValidUrl(track.hostPhotoUrl)
     ? `<img class="host-photo" src="${track.hostPhotoUrl}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`

@@ -69,12 +69,34 @@ function isUtcZ(dt) {
   return /Z$/.test(dt.trim()) && !isNaN(Date.parse(dt));
 }
 
+const REQUIRED_TRACK_COLUMNS = [
+  "id", "status", "sortOrder", "title", "author", "category", "host", "hostRole",
+  "spotsLeft", "spotsTotal", "sessionCount", "cadence", "price", "formUrl"
+];
+const REQUIRED_SESSION_COLUMNS = [
+  "trackId", "number", "chapters", "datetimeUTC", "durationMins", "meetLink", "status"
+];
+
+function assertColumns(rows, required, label) {
+  if (rows.length === 0) return;
+  const present = new Set(Object.keys(rows[0]));
+  const missing = required.filter(c => !present.has(c));
+  if (missing.length) {
+    console.error(`${label}: missing required column(s): ${missing.join(", ")}`);
+    console.error(`Found columns: ${[...present].join(", ")}`);
+    process.exit(1);
+  }
+}
+
 function main() {
   if (!fs.existsSync(tracksPath)) { console.error(`Tracks CSV not found: ${tracksPath}`); process.exit(1); }
   if (!fs.existsSync(sessionsPath)) { console.error(`Sessions CSV not found: ${sessionsPath}`); process.exit(1); }
 
   const tracks = parseCsv(fs.readFileSync(tracksPath, "utf8"));
   const sessions = parseCsv(fs.readFileSync(sessionsPath, "utf8"));
+
+  assertColumns(tracks, REQUIRED_TRACK_COLUMNS, "tracks.csv");
+  assertColumns(sessions, REQUIRED_SESSION_COLUMNS, "sessions.csv");
 
   const errors = [];
   const warnings = [];
