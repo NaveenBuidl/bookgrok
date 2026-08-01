@@ -70,7 +70,7 @@ function isUtcZ(dt) {
 }
 
 const REQUIRED_TRACK_COLUMNS = [
-  "id", "status", "sortOrder", "title", "author", "category", "host", "hostRole",
+  "id", "status", "sortOrder", "title", "author", "category", "pagecount", "host", "hostRole",
   "spotsLeft", "spotsTotal", "sessionCount", "cadence", "price", "formUrl"
 ];
 const REQUIRED_SESSION_COLUMNS = [
@@ -148,6 +148,44 @@ function main() {
       // price drift
       if (t.price !== "$9") {
         errors.push(`${rowLabel}: price="${t.price}" — expected flat "$9"`);
+      }
+
+      // required-for-published fields (sub-title and hostRole stay optional)
+      const requiredForPublish = ["category", "author", "pagecount"];
+      const missingFields = requiredForPublish.filter(f => !t[f] || !t[f].trim());
+      if (missingFields.length) {
+        errors.push(`${rowLabel}: missing required field(s) for published track: ${missingFields.join(", ")}`);
+      }
+
+      // OPTIONAL fields (card content/hierarchy round): warn only if present but malformed.
+      // sessionMinutes, pagesPerSession — positive integers if set, omitted from the card otherwise.
+      ["sessionMinutes", "pagesPerSession"].forEach(field => {
+        const val = t[field];
+        if (val && (isNaN(parseInt(val, 10)) || parseInt(val, 10) <= 0)) {
+          warnings.push(`${rowLabel}: ${field} is set but not a positive number ("${val}")`);
+        }
+      });
+      // hostCompletionRate, hostRating — numeric if set (rate 0-100, rating 0-5).
+      if (t.hostCompletionRate) {
+        const n = parseFloat(t.hostCompletionRate);
+        if (isNaN(n) || n < 0 || n > 100) {
+          warnings.push(`${rowLabel}: hostCompletionRate is set but not a number 0-100 ("${t.hostCompletionRate}")`);
+        }
+      }
+      if (t.hostRating) {
+        const n = parseFloat(t.hostRating);
+        if (isNaN(n) || n < 0 || n > 5) {
+          warnings.push(`${rowLabel}: hostRating is set but not a number 0-5 ("${t.hostRating}")`);
+        }
+      }
+      if (t.hostCohortsHosted && isNaN(parseInt(t.hostCohortsHosted, 10))) {
+        warnings.push(`${rowLabel}: hostCohortsHosted is set but not a number ("${t.hostCohortsHosted}")`);
+      }
+      if (t.hostRatingCount && isNaN(parseInt(t.hostRatingCount, 10))) {
+        warnings.push(`${rowLabel}: hostRatingCount is set but not a number ("${t.hostRatingCount}")`);
+      }
+      if (t.hostRatingCount && !t.hostRating) {
+        warnings.push(`${rowLabel}: hostRatingCount is set but hostRating is empty — reader count with no rating renders nothing`);
       }
 
       // URL fields: formUrl required, others optional-but-must-be-valid-if-present

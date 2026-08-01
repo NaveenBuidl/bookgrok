@@ -112,6 +112,40 @@ function formatLocalDate(utcString) {
   } catch (e) { return utcString; }
 }
 
+function formatLocalDateShort(utcString) {
+  if (!utcString) return "";
+  const d = new Date(utcString);
+  if (isNaN(d.getTime())) return "";
+  try {
+    return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  } catch (e) { return ""; }
+}
+
+// Local session time with an unambiguous short timezone offset, e.g. "7:00 PM GMT+5:30".
+// Returns "" if utcString is missing/unparseable — callers must not render a partial string.
+function formatLocalTimeShort(utcString) {
+  if (!utcString) return "";
+  const d = new Date(utcString);
+  if (isNaN(d.getTime())) return "";
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      hour: "numeric", minute: "2-digit", timeZoneName: "shortOffset"
+    }).format(d);
+  } catch (e) { return ""; }
+}
+
+// Local session time with no timezone suffix, e.g. "7:00 PM" — paired with the literal
+// phrase "your time" in the UI instead of a GMT offset, since the offset still requires
+// mental conversion and the phrase does not.
+function formatLocalTimeOnly(utcString) {
+  if (!utcString) return "";
+  const d = new Date(utcString);
+  if (isNaN(d.getTime())) return "";
+  try {
+    return new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(d);
+  } catch (e) { return ""; }
+}
+
 function buildCalUrl(session) {
   try {
     const start = new Date(session.datetimeUTC);

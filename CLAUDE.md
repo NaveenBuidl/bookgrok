@@ -6,7 +6,7 @@ Read docs/bookgrok_v8_4_claudecode_handoff.md and docs/bookgrok_data_model_v8_4.
 
 - Homepage cards: Register + Share only. NO "Buy the book" on homepage (it stays on access page).
 - Pricing: flat `$9` everywhere. No euros.
-- New `hostLinkedIn` field: stored, NOT rendered as a link in v8.4 (feature-flagged).
+- `hostLinkedIn` field: rendered as an icon link in the homepage card's host block (and access page). The host's verifiable identity is part of the card's trust signal.
 - New Share control on homepage cards and access page: copies public track URL + mailto. See src/share.js.
 - Homepage splits tracks into "Open now" (first CONFIG.featuredCount) and "Full library" (rest).
 - 30 curated dense-nonfiction tracks in samples/tracks_sample.csv.
@@ -32,7 +32,7 @@ Read docs/bookgrok_v8_4_claudecode_handoff.md and docs/bookgrok_data_model_v8_4.
 
 ## Access gating
 
-- Homepage NEVER shows: Meet links, Calendar links, homework URLs, Slack links, access URL, Buy book, hostLinkedIn link.
+- Homepage NEVER shows: Meet links, Calendar links, homework URLs, Slack links, access URL, Buy book.
 - Access page may show: Join, Calendar, Submit HW, community block, Buy book, Share.
 
 ## Build order
@@ -102,3 +102,28 @@ Instead, stop and give the human:
 
 Then continue once they report back. This is faster and more reliable 
 than attempting tool-based access to authenticated owner-only surfaces.
+
+## Data source discipline
+
+samples/tracks_sample.csv is a stale offline fixture. It is NOT
+the source of truth and drifts behind the live Sheet.
+
+Any question about what a track's actual field values are —
+cover URLs, image dimensions, metadata completeness, row order,
+counts — must be answered by fetching the live gviz CSV from
+config.js. Never grep the sample file to answer these.
+
+The sample file is only for offline rendering when the network
+is unavailable. If you use it, say so explicitly in your report.
+
+The published CSV can lag a Sheet edit by 1-2 minutes. If values
+look stale right after I say I've updated the Sheet, wait and
+retry before concluding nothing changed.
+
+## Card — optional content fields
+
+Optional card lines (host proof stats, commitment microcopy,
+includes line) are a menu, not a stack. Pick one persuasion
+register per card. Populating all of them at once is a misuse,
+not a supported state — the card was not designed to hold all
+six simultaneously without growing materially taller.

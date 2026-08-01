@@ -20,7 +20,7 @@ function renderHomepage(tracks, sessions) {
   html += `<section class="track-section">
     <p class="section-eyebrow">Open now</p>
     <div class="track-list">
-      ${featured.map(t => buildTrackCard(t, sessions)).join("")}
+      ${featured.map((t, i) => buildTrackCard(t, sessions, i < 2)).join("")}
     </div>
   </section>`;
 
@@ -37,107 +37,205 @@ function renderHomepage(tracks, sessions) {
   initShareButtons(tracks);
 }
 
-function buildTrackCard(track, sessions) {
+function buildTrackCard(track, sessions, isPriority) {
   const firstSession = getFirstSession(sessions, track.id);
-  const startDate = firstSession ? formatLocalDate(firstSession.datetimeUTC) : "";
-  const pct = spotsPercent(track);
+  const startDate = firstSession ? formatLocalDateShort(firstSession.datetimeUTC) : "";
+  const sessionTime = firstSession ? formatLocalTimeOnly(firstSession.datetimeUTC) : "";
+  const sessionTimeTz = firstSession ? formatLocalTimeShort(firstSession.datetimeUTC) : "";
 
+  const priorityAttrs = isPriority ? ' fetchpriority="high"' : "";
   const coverImg = isValidUrl(track.bookCoverUrl)
-    ? `<img class="book-cover" src="${track.bookCoverUrl}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    ? `<img class="book-cover" src="${track.bookCoverUrl}" alt="" loading="lazy" decoding="async"${priorityAttrs} onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
     : "";
   const coverFallback = `<div class="book-cover-fallback" style="${isValidUrl(track.bookCoverUrl) ? 'display:none' : ''}">${escapeHtml((track.title || "?").charAt(0))}</div>`;
 
   const hostImg = isValidUrl(track.hostPhotoUrl)
-    ? `<img class="host-photo" src="${track.hostPhotoUrl}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    ? `<img class="host-photo" src="${track.hostPhotoUrl}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
     : "";
   const hostImgFallback = `<div class="host-photo-fallback" style="${isValidUrl(track.hostPhotoUrl) ? 'display:none' : ''}">${escapeHtml((track.host || "?").charAt(0))}</div>`;
-
-  const registerBtn = isValidUrl(track.formUrl)
-    ? `<a class="btn-primary" href="${track.formUrl}" target="_blank" rel="noopener">Register</a>`
-    : "";
-
-  const shareIcon = `<svg class="share-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>`;
-  const shareBtn = `<button class="btn-share" type="button" data-share-track="${escapeHtml(track.id)}" aria-label="Share">${shareIcon}</button>`;
-
-  const category = track.category
-    ? `<p class="track-category">${escapeHtml(track.category)}</p>` : "";
-
-  const subtitle = track["sub-title"]
-    ? `<p class="track-subtitle">${escapeHtml(track["sub-title"])}</p>` : "";
-
-  const author = track.author
-    ? `<p class="track-author">${escapeHtml(track.author)}${track.pagecount ? ` · ${escapeHtml(track.pagecount)} pages` : ""}</p>` : "";
-
-  const hostName = track.host
-    ? `<p class="host-name"><span class="host-name-label">Hosted by</span> ${escapeHtml(track.host)}</p>` : "";
-  const hostRole = track.hostRole
-    ? `<p class="host-role">${escapeHtml(track.hostRole)}</p>` : "";
-  const linkedInIcon = `<svg class="linkedin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#0A66C2"/><path fill="#fff" d="M7.5 9.5h2.7v8h-2.7zM8.85 8.3a1.55 1.55 0 1 1 0-3.1 1.55 1.55 0 0 1 0 3.1zM12.5 9.5h2.6v1.1h.04c.36-.68 1.24-1.4 2.56-1.4 2.74 0 3.25 1.8 3.25 4.14v4.66h-2.7v-4.13c0-.98-.02-2.25-1.37-2.25-1.37 0-1.58 1.07-1.58 2.18v4.2h-2.7z"/></svg>`;
-  const linkedInBtn = isValidUrl(track.hostLinkedIn)
-    ? `<a class="btn-linkedin" href="${track.hostLinkedIn}" target="_blank" rel="noopener" aria-label="LinkedIn">${linkedInIcon}</a>` : "";
-
-  const detailParts = [];
-  if (track.sessionCount) detailParts.push(`<span>${escapeHtml(track.sessionCount)} sessions</span>`);
-  if (track.cadence) detailParts.push(`<span>${escapeHtml(track.cadence)}</span>`);
-  if (startDate) detailParts.push(`<span>Starts ${startDate}</span>`);
-  const details = detailParts.length
-    ? `<div class="track-details">${detailParts.join('<span class="detail-sep">·</span>')}</div>` : "";
 
   const spotsTotalNum = parseInt(track.spotsTotal, 10);
   const spotsLeftNum = parseInt(track.spotsLeft, 10);
   const hasSpots = track.spotsLeft !== "" && track.spotsLeft != null && track.spotsTotal !== "" && track.spotsTotal != null
     && Number.isInteger(spotsTotalNum) && spotsTotalNum > 0
     && Number.isInteger(spotsLeftNum) && spotsLeftNum >= 0 && spotsLeftNum <= spotsTotalNum;
-  const spots = hasSpots
-    ? (() => {
-        const takenCount = spotsTotalNum - spotsLeftNum;
-        const dots = Array.from({ length: spotsTotalNum }, (_, i) =>
-          `<span class="spot-dot${i < takenCount ? " is-taken" : ""}"></span>`
-        ).join("");
-        return `<div class="spots">
-        <span class="spots-label">${escapeHtml(track.spotsLeft)} of ${escapeHtml(track.spotsTotal)} spots left</span>
-        <div class="spots-dots" role="img" aria-label="${takenCount} of ${spotsTotalNum} spots taken">${dots}</div>
-      </div>`;
-      })()
+  const isSoldOut = hasSpots && spotsLeftNum === 0;
+
+  const registerBtn = isSoldOut
+    ? `<span class="btn-primary btn-join-cohort btn-sold-out" aria-disabled="true">Cohort full</span>`
+    : (isValidUrl(track.formUrl)
+      ? `<a class="btn-primary btn-join-cohort" href="${track.formUrl}" target="_blank" rel="noopener">Join this cohort</a>`
+      : "");
+
+  const shareIcon = `<svg class="share-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>`;
+  const shareBtn = `<button class="btn-share btn-share-card" type="button" data-share-track="${escapeHtml(track.id)}" aria-label="Share">${shareIcon}</button>`;
+
+  const category = track.category
+    ? `<p class="track-category">${escapeHtml(track.category)}</p>` : "";
+
+  const author = track.author
+    ? `<p class="track-author">${escapeHtml(track.author)}</p>` : "";
+
+  const hostName = track.host
+    ? `<p class="host-name"><span class="host-name-label">Hosted by</span> ${escapeHtml(track.host)}</p>` : "";
+  const linkedInIcon = `<svg class="linkedin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#0A66C2"/><path fill="#fff" d="M7.5 9.5h2.7v8h-2.7zM8.85 8.3a1.55 1.55 0 1 1 0-3.1 1.55 1.55 0 0 1 0 3.1zM12.5 9.5h2.6v1.1h.04c.36-.68 1.24-1.4 2.56-1.4 2.74 0 3.25 1.8 3.25 4.14v4.66h-2.7v-4.13c0-.98-.02-2.25-1.37-2.25-1.37 0-1.58 1.07-1.58 2.18v4.2h-2.7z"/></svg>`;
+  const linkedInBtn = isValidUrl(track.hostLinkedIn)
+    ? `<a class="btn-linkedin" href="${track.hostLinkedIn}" target="_blank" rel="noopener" aria-label="${escapeHtml(track.host || 'Host')} on LinkedIn">${linkedInIcon}</a>` : "";
+
+  // Host proof line — placeholder data pending real cohort/completion/rating tracking.
+  // These three Sheet columns (hostCohortsHosted, hostCompletionRate, hostRating) do not yet
+  // reflect audited numbers. This is a private prototype; do not ship these to a public
+  // launch without replacing them with real tracked values.
+  const proofLines = [];
+  if (track.hostCohortsHosted && track.hostCohortsHosted.trim()) {
+    const n = parseInt(track.hostCohortsHosted, 10);
+    if (!isNaN(n)) proofLines.push(`${n} cohort${n === 1 ? "" : "s"} hosted`);
+  }
+  if (track.hostCompletionRate && track.hostCompletionRate.trim()) {
+    const n = parseFloat(track.hostCompletionRate);
+    if (!isNaN(n)) proofLines.push(`${n}% finished the book`);
+  }
+  if (track.hostRating && track.hostRating.trim()) {
+    const n = parseFloat(track.hostRating);
+    if (!isNaN(n)) {
+      const readerCount = track.hostRatingCount && track.hostRatingCount.trim() ? parseInt(track.hostRatingCount, 10) : null;
+      proofLines.push(`${n.toFixed(1)} avg${readerCount && !isNaN(readerCount) ? ` from ${readerCount} readers` : ""}`);
+    }
+  }
+  const hostProof = proofLines.length
+    ? `<div class="host-proof">${proofLines.map(l => `<p class="host-proof-line">${escapeHtml(l)}</p>`).join("")}</div>`
+    : (track.hostRole ? `<p class="host-role">${escapeHtml(track.hostRole)}</p>` : "");
+
+  // Weekday name from the first session's date (falls back to parsing cadence's "…, <Weekday>s" tail)
+  let weekdayPlural = "";
+  if (firstSession && firstSession.datetimeUTC) {
+    const wdDate = new Date(firstSession.datetimeUTC);
+    if (!isNaN(wdDate.getTime())) {
+      weekdayPlural = `${wdDate.toLocaleDateString(undefined, { weekday: "long" })}s`;
+    }
+  }
+  if (!weekdayPlural && track.cadence) {
+    const m = track.cadence.match(/,\s*([A-Za-z]+)/);
+    if (m) weekdayPlural = m[1];
+  }
+
+  // --- Meta line 1: "{Weekday}s, {time} · your time" — time/"your time" omitted if datetimeUTC
+  // missing/unparseable. Full offset (e.g. "GMT+5:30") kept as a title-attribute tooltip so the
+  // precise timezone is still one hover away, but the reading copy states "your time" literally.
+  let metaLine1Html;
+  if (weekdayPlural && sessionTime) {
+    metaLine1Html = `<span class="meta-time-primary">${escapeHtml(weekdayPlural)}, ${escapeHtml(sessionTime)}</span> <span class="meta-time-secondary"${sessionTimeTz ? ` title="${escapeHtml(sessionTimeTz)}"` : ""}>your time</span>`;
+  } else if (weekdayPlural) {
+    metaLine1Html = `<span class="meta-time-primary">${escapeHtml(weekdayPlural)}</span>`;
+  } else {
+    metaLine1Html = "";
+  }
+
+  // --- Meta line 2: "{N} weeks from {date}" — omitted piecewise if sessionCount/startDate missing
+  const line2Parts = [];
+  if (track.sessionCount) line2Parts.push(`${escapeHtml(track.sessionCount)} weeks`);
+  if (startDate) line2Parts.push(`from ${startDate}`);
+  const metaLine2 = line2Parts.join(" ");
+
+  // --- Meta line 3: seat dots + honest scarcity framing
+  const spotsTotalCapped = hasSpots ? Math.min(spotsTotalNum, 20) : 0; // sanity cap, not a real-world limit
+  const seatDots = hasSpots
+    ? `<span class="seat-dots" role="img" aria-label="${spotsTotalNum - spotsLeftNum} of ${spotsTotalNum} seats taken">${
+        Array.from({ length: spotsTotalCapped }, (_, i) => `<span class="seat-dot${i < (spotsTotalNum - spotsLeftNum) ? " is-taken" : ""}"></span>`).join("")
+      }</span>`
+    : "";
+  let seatText = "";
+  let seatTextClass = "spots-neutral";
+  if (isSoldOut) {
+    seatText = "Cohort full";
+    seatTextClass = "scarcity";
+  } else if (hasSpots && spotsLeftNum <= 2) {
+    seatText = `${escapeHtml(track.spotsLeft)} seat${spotsLeftNum === 1 ? "" : "s"} left of ${escapeHtml(track.spotsTotal)}`;
+    seatTextClass = "scarcity";
+  } else if (hasSpots) {
+    seatText = `Capped at ${escapeHtml(track.spotsTotal)} · ${escapeHtml(String(spotsTotalNum - spotsLeftNum))} joined`;
+    seatTextClass = "spots-neutral";
+  }
+  const metaLine3 = hasSpots
+    ? `${seatDots}<span class="${seatTextClass}">${seatText}</span>`
     : "";
 
-  const price = track.price
-    ? `<span class="price">${escapeHtml(track.price)}</span>` : "";
+  // --- Price framing: total + per-week breakdown, right-aligned beside lines 1-2.
+  // price is stored as "$9" (see CLAUDE.md: flat $9 everywhere) — strip a leading currency
+  // symbol before parsing so the per-week derivation actually runs instead of silently NaN-ing.
+  const priceNum = parseFloat(String(track.price || "").replace(/^[^\d.-]+/, ""));
+  const isPricedFree = !track.price || !track.price.trim() || (!isNaN(priceNum) && priceNum === 0);
+  const sessionCountNum = parseInt(track.sessionCount, 10);
+  let priceTotalText, priceUnitText;
+  if (isPricedFree) {
+    priceTotalText = "Free";
+    priceUnitText = track.sessionCount ? `${escapeHtml(track.sessionCount)} session${sessionCountNum === 1 ? "" : "s"}` : "";
+  } else {
+    priceTotalText = escapeHtml(track.price);
+    if (!isNaN(priceNum) && Number.isInteger(sessionCountNum) && sessionCountNum > 0) {
+      const perWeek = priceNum / sessionCountNum;
+      const perWeekText = perWeek < 1 ? perWeek.toFixed(2) : (Number.isInteger(perWeek) ? perWeek.toFixed(0) : perWeek.toFixed(2));
+      priceUnitText = `for ${escapeHtml(track.sessionCount)} session${sessionCountNum === 1 ? "" : "s"} · $${perWeekText} a week`;
+    } else if (track.sessionCount) {
+      priceUnitText = `for ${escapeHtml(track.sessionCount)} session${sessionCountNum === 1 ? "" : "s"}`;
+    } else {
+      priceUnitText = "";
+    }
+  }
+
+  const metaBlock = `<div class="schedule-price-row">
+    <div class="meta-lines">
+      ${metaLine1Html ? `<p class="track-schedule meta-line-1">${metaLine1Html}</p>` : ""}
+      ${metaLine2 ? `<p class="track-schedule">${metaLine2}</p>` : ""}
+      ${metaLine3 ? `<p class="track-schedule meta-line-3">${metaLine3}</p>` : ""}
+    </div>
+    <div class="price-lines">
+      <p class="price-total">${priceTotalText}</p>
+      ${priceUnitText ? `<p class="price-unit">${priceUnitText}</p>` : ""}
+    </div>
+  </div>`;
+
+  // Commitment microcopy — derived only from explicit Sheet fields, never guessed.
+  const commitmentParts = [];
+  if (track.sessionMinutes && !isNaN(parseInt(track.sessionMinutes, 10))) {
+    commitmentParts.push(`~${parseInt(track.sessionMinutes, 10)} min live weekly`);
+  }
+  if (track.pagesPerSession && !isNaN(parseInt(track.pagesPerSession, 10))) {
+    commitmentParts.push(`~${parseInt(track.pagesPerSession, 10)} pages between sessions`);
+  }
+  const commitmentLine = commitmentParts.length
+    ? `<p class="commitment-line">${commitmentParts.join(" · ")}</p>` : "";
+
+  // Includes line — pipe-separated optional Sheet field, rendered verbatim (escaped), omitted if blank.
+  const includesLine = track.includes && track.includes.trim()
+    ? `<p class="includes-line">${track.includes.split("|").map(s => escapeHtml(s.trim())).filter(Boolean).join(" · ")}</p>`
+    : "";
 
   return `
     <article class="card" id="track-${escapeHtml(track.id)}">
-      <div class="card-head">
-        <div class="image-wrap">
-          ${coverImg}${coverFallback}
-        </div>
-        <div class="identity-stack">
-          <div class="identity-box">
-            ${category}
-            <h2 class="track-title">${escapeHtml(track.title)}</h2>
-            ${subtitle}
-            ${author}
-          </div>
-          <div class="host-box">
-            ${hostImg}${hostImgFallback}
-            <div class="host-text">
-              ${hostName}
-              ${hostRole}
-              ${linkedInBtn}
-            </div>
-          </div>
-        </div>
+      <div class="image-wrap">
+        ${coverImg}${coverFallback}
+        ${shareBtn}
       </div>
-      <div class="card-footer">
-        <div class="footer-top">
-          ${details}
-          ${price}
+      <div class="card-body">
+        <div class="title-block">
+          ${category}
+          <h3 class="track-title">${escapeHtml(track.title)}</h3>
+          ${author}
         </div>
-        ${spots}
-        <div class="btn-group">
-          <a class="btn-preview" href="/access/?track=${escapeHtml(track.id)}&preview=1">See sessions</a>
-          ${shareBtn}
-          ${registerBtn}
+        <div class="host-block">
+          ${hostImg}${hostImgFallback}
+          <div class="host-text">
+            ${hostName}
+            ${hostProof}
+            ${linkedInBtn}
+          </div>
         </div>
+        ${metaBlock}
+        ${registerBtn}
+        ${commitmentLine}
+        ${includesLine}
+        <a class="session-preview-link" href="/access/?track=${escapeHtml(track.id)}&preview=1">Preview the sessions</a>
       </div>
     </article>
   `;
