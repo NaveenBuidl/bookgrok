@@ -85,9 +85,10 @@ a { color: inherit; }
   align-items: center; justify-content: center; padding: 32px 20px;
 }
 .book-cover {
-  height: 262px;
   width: 190px;
-  object-fit: cover;
+  height: auto;
+  max-height: 262px;
+  object-fit: contain;
   border-radius: 5px;
   box-shadow: 0 12px 32px rgba(0,0,0,0.28);
   display: block;
@@ -247,7 +248,7 @@ a { color: inherit; }
   .card-head { grid-template-columns: 1fr; }
   .sessions-section, .community-section { padding: 16px 12px; }
 
-  .book-cover { width: 210px; height: 290px; }
+  .book-cover { width: 210px; height: auto; max-height: 290px; }
   .book-cover-fallback { width: 152px; height: 210px; }
   .host-photo, .host-photo-fallback { width: 76px; height: 76px; }
   .host-photo-fallback { font-size: 28px; }
