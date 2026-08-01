@@ -43,7 +43,7 @@ function buildTrackCard(track, sessions) {
   const pct = spotsPercent(track);
 
   const coverImg = isValidUrl(track.bookCoverUrl)
-    ? `<img class="book-cover" src="${track.bookCoverUrl}" alt="" width="190" height="262" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    ? `<img class="book-cover" src="${track.bookCoverUrl}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
     : "";
   const coverFallback = `<div class="book-cover-fallback" style="${isValidUrl(track.bookCoverUrl) ? 'display:none' : ''}">${escapeHtml((track.title || "?").charAt(0))}</div>`;
 
