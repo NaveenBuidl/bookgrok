@@ -165,10 +165,11 @@ a { color: inherit; }
    without disturbing the rhythm between the other blocks. */
 .session-preview-link { margin-top: -2px; }
 
-/* Title block — quiet caption group, unboxed but bounded by a hairline */
+/* Title block — quiet caption group, unboxed. The divider between this block and the
+   host block below lives on .host-block (border-top), not here, so there's exactly
+   one hairline between them instead of two stacked ones. */
 .title-block {
   display: flex; flex-direction: column; gap: 4px;
-  padding-bottom: 12px; border-bottom: 1px solid #ede6da;
 }
 .track-category {
   margin: 0; font-size: var(--card-text-xs); font-weight: 400;
@@ -181,11 +182,11 @@ a { color: inherit; }
 .track-author { margin: 0; font-size: var(--card-text-sm); font-weight: 400; color: var(--card-text-muted); }
 
 /* Host block — the card's second most salient surface after the cover. No fill; separated
-   from the title block above by a hairline instead (see .host-block comment further down
-   for why this one loses its tint while schedule-price-row keeps its fill). */
+   from the title block above by a single hairline (see .schedule-price-row further down
+   for why that one keeps its fill instead). */
 .host-block {
   display: flex; align-items: center; gap: 16px;
-  padding: 14px 0; border-top: 1px solid #ede6da;
+  padding-top: 14px; margin-top: -2px; border-top: 1px solid #ede6da;
 }
 .host-photo {
   width: 110px; height: 110px; flex: none;
