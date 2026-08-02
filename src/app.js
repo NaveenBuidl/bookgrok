@@ -111,6 +111,33 @@ function amazonResizedUrl(url, px) {
   return url.replace(AMAZON_SIZE_RE, `_SY${px}_SX${Math.round(px * 0.65)}_${isWebp ? "FMwebp_" : ""}`);
 }
 
+// Crop-threshold fallback — .book-cover-frame is a fixed aspect-ratio: 0.65 box (see
+// styles.css) so covers reserve their footprint before decoding, with object-fit: cover
+// filling that box for every cover by default. That's the right call for most covers
+// (they're close enough to 0.65 that cover just reads as a slightly bold, zoomed-in
+// crop), but a source image far enough from 0.65 loses a lot of width/height under
+// cover — computed live per-image from naturalWidth/naturalHeight, not hardcoded per
+// track, so any future outlier self-heals the same way without needing a CMS column or
+// an exceptions list. Above CROP_THRESHOLD, switch that one <img> to object-fit: contain
+// (letterboxed against the frame's tint/background) instead of over-cropping it.
+const COVER_FRAME_RATIO = 0.65; // must match .book-cover-frame's aspect-ratio in styles.css
+const COVER_CROP_THRESHOLD = 0.08; // 8% — max width/height loss tolerated under object-fit: cover
+
+function applyCoverFitThreshold(img) {
+  const w = img.naturalWidth, h = img.naturalHeight;
+  if (!w || !h) return;
+  const imgRatio = w / h;
+  let cropFraction;
+  if (imgRatio > COVER_FRAME_RATIO) {
+    cropFraction = 1 - (h * COVER_FRAME_RATIO) / w; // cover crops left+right
+  } else if (imgRatio < COVER_FRAME_RATIO) {
+    cropFraction = 1 - (w / COVER_FRAME_RATIO) / h; // cover crops top+bottom
+  } else {
+    cropFraction = 0;
+  }
+  if (cropFraction > COVER_CROP_THRESHOLD) img.classList.add("is-contain");
+}
+
 function buildTrackCard(track, sessions, isPriority) {
   const firstSession = getFirstSession(sessions, track.id);
   const startDate = firstSession ? formatLocalDateShort(firstSession.datetimeUTC) : "";
@@ -127,7 +154,7 @@ function buildTrackCard(track, sessions, isPriority) {
   const coverSrcset = coverHasImg && cover2x !== cover1x ? ` srcset="${cover1x} 1x, ${cover2x} 2x" sizes="(max-width: 480px) 90vw, 260px"` : "";
   const coverTintAttr = track.coverTint && track.coverTint.trim() ? ` style="--cover-tint: ${escapeHtml(track.coverTint.trim())}"` : "";
   const coverImg = coverHasImg
-    ? `<img class="book-cover" src="${cover1x}"${coverSrcset} alt="" loading="lazy" decoding="async"${priorityAttrs} onload="this.classList.add('is-loaded')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    ? `<img class="book-cover" src="${cover1x}"${coverSrcset} alt="" loading="lazy" decoding="async"${priorityAttrs} onload="applyCoverFitThreshold(this);this.classList.add('is-loaded')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
     : "";
   const coverFallback = `<div class="book-cover-fallback" style="${coverHasImg ? 'display:none' : ''}">${escapeHtml((track.title || "?").charAt(0))}</div>`;
 
