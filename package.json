@@ -1,8 +1,10 @@
 {
   "devDependencies": {
+    "node-vibrant": "^3.1.6",
     "playwright": "^1.61.1"
   },
   "scripts": {
+    "extract-colors": "node scripts/extract-cover-colors.js",
     "screenshot": "node scripts/screenshot-check.js",
     "smoke": "node scripts/smoke-test.js"
   }
