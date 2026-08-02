@@ -35,6 +35,80 @@ function renderHomepage(tracks, sessions) {
 
   main.innerHTML = html;
   initShareButtons(tracks);
+  initCardEntranceObserver();
+}
+
+// Entrance stagger — progressive enhancement only. Cards render fully visible by
+// default (see .card in styles.css — no opacity/transform gating on the base class).
+// This function OPTS cards INTO the animated entrance by adding .entrance-pending
+// (which is what carries the opacity:0/offset starting state) immediately before
+// observing each one, so there's never a frame where a card is invisible without an
+// observer already committed to revealing it. If IntersectionObserver doesn't exist,
+// or anything here throws, we bail before adding the class — cards simply stay in
+// their normal visible resting state. Reduced-motion users are skipped entirely.
+function initCardEntranceObserver() {
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (typeof IntersectionObserver === "undefined") return;
+  try {
+    const cards = document.querySelectorAll(".card:not(.entrance-pending)");
+    if (!cards.length) return;
+    const io = new IntersectionObserver((entries, observer) => {
+      let batchIndex = 0;
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        el.style.transitionDelay = `${batchIndex * 40}ms`;
+        el.classList.add("is-visible");
+        observer.unobserve(el);
+        batchIndex++;
+      });
+    }, { threshold: 0.1 });
+    cards.forEach(card => {
+      card.classList.add("entrance-pending");
+      io.observe(card);
+    });
+  } catch (e) {
+    console.warn("Entrance animation unavailable, cards render statically:", e);
+  }
+}
+
+// Header scroll hairline (item 6) — a 12px sentinel sits right after the header; once
+// it scrolls fully out of view (12px of scroll has happened), the header gets its
+// bottom hairline. IntersectionObserver over a scroll listener, per the sentinel approach.
+// Guarded the same way as initCardEntranceObserver: this runs before loadData() in init(),
+// so an uncaught throw here would abort rendering entirely and leave the whole homepage
+// blank — purely cosmetic, must never be allowed to break card rendering.
+function initHeaderScrollHairline() {
+  if (typeof IntersectionObserver === "undefined") return;
+  try {
+    const header = document.querySelector(".site-header");
+    const sentinel = document.getElementById("header-scroll-sentinel");
+    if (!header || !sentinel) return;
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        header.classList.toggle("is-scrolled", !entry.isIntersecting);
+      });
+    }, { threshold: 0 });
+    io.observe(sentinel);
+  } catch (e) {
+    console.warn("Header scroll hairline unavailable:", e);
+  }
+}
+
+// Amazon cover URL rewrite (item 3) — m.media-amazon.com URLs carry a size segment like
+// "_SY1500_", "_SL1500_", "_SY445_SX342_FMwebp_", or "_SX342_SY445_FMwebp_" right before the
+// file extension. Consecutive "S[XYL]<digits>_" tokens share their underscores (no leading "_"
+// on the 2nd token), so the match is one leading "_" then 1-2 "S[XYL]<digits>_" tokens, optionally
+// followed by "FMwebp_". Replaces the size tokens with a fixed target width/height, keeping
+// FMwebp if present. Any URL that doesn't match this shape (or isn't m.media-amazon.com) passes
+// through unchanged — never break a working URL for a pattern we didn't anticipate.
+const AMAZON_SIZE_RE = /_(?:S[XYL]\d+_){1,2}(?:FMwebp_)?(?=\.[a-zA-Z]+$)/;
+
+function amazonResizedUrl(url, px) {
+  if (!/^https?:\/\/m\.media-amazon\.com\//i.test(url)) return url;
+  if (!AMAZON_SIZE_RE.test(url)) return url;
+  const isWebp = /FMwebp_/.test(url.match(AMAZON_SIZE_RE)[0]);
+  return url.replace(AMAZON_SIZE_RE, `_SY${px}_SX${Math.round(px * 0.65)}_${isWebp ? "FMwebp_" : ""}`);
 }
 
 function buildTrackCard(track, sessions, isPriority) {
@@ -44,10 +118,18 @@ function buildTrackCard(track, sessions, isPriority) {
   const sessionTimeTz = firstSession ? formatLocalTimeShort(firstSession.datetimeUTC) : "";
 
   const priorityAttrs = isPriority ? ' fetchpriority="high"' : "";
-  const coverImg = isValidUrl(track.bookCoverUrl)
-    ? `<img class="book-cover" src="${track.bookCoverUrl}" alt="" loading="lazy" decoding="async"${priorityAttrs} onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+  const coverHasImg = isValidUrl(track.bookCoverUrl);
+  const cover1x = coverHasImg ? amazonResizedUrl(track.bookCoverUrl, 400) : "";
+  const cover2x = coverHasImg ? amazonResizedUrl(track.bookCoverUrl, 800) : "";
+  // srcset only added when the 2x rewrite actually differs (i.e. it's a recognized Amazon
+  // size pattern) — for pass-through URLs (non-Amazon, or an unrecognized Amazon pattern)
+  // there's no known 2x variant to offer, so we just serve the single src.
+  const coverSrcset = coverHasImg && cover2x !== cover1x ? ` srcset="${cover1x} 1x, ${cover2x} 2x" sizes="(max-width: 480px) 90vw, 260px"` : "";
+  const coverTintAttr = track.coverTint && track.coverTint.trim() ? ` style="--cover-tint: ${escapeHtml(track.coverTint.trim())}"` : "";
+  const coverImg = coverHasImg
+    ? `<img class="book-cover" src="${cover1x}"${coverSrcset} alt="" loading="lazy" decoding="async"${priorityAttrs} onload="this.classList.add('is-loaded')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
     : "";
-  const coverFallback = `<div class="book-cover-fallback" style="${isValidUrl(track.bookCoverUrl) ? 'display:none' : ''}">${escapeHtml((track.title || "?").charAt(0))}</div>`;
+  const coverFallback = `<div class="book-cover-fallback" style="${coverHasImg ? 'display:none' : ''}">${escapeHtml((track.title || "?").charAt(0))}</div>`;
 
   const hostImg = isValidUrl(track.hostPhotoUrl)
     ? `<img class="host-photo" src="${track.hostPhotoUrl}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
@@ -214,7 +296,9 @@ function buildTrackCard(track, sessions, isPriority) {
   return `
     <article class="card" id="track-${escapeHtml(track.id)}">
       <div class="image-wrap">
-        ${coverImg}${coverFallback}
+        <div class="book-cover-frame"${coverTintAttr}>
+          ${coverImg}${coverFallback}
+        </div>
         ${shareBtn}
       </div>
       <div class="card-body">
@@ -244,6 +328,7 @@ function buildTrackCard(track, sessions, isPriority) {
 (async function init() {
   const main = document.getElementById("main");
   if (main) main.innerHTML = `<p class="loading-state">Loading tracks…</p>`;
+  initHeaderScrollHairline();
   try {
     const { tracks, sessions } = await loadData();
     renderHomepage(tracks, sessions);
