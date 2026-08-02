@@ -321,9 +321,9 @@ function buildTrackCard(track, sessions, isPriority) {
     : "";
 
   return `
-    <article class="card" id="track-${escapeHtml(track.id)}">
+    <article class="card" id="track-${escapeHtml(track.id)}"${coverTintAttr}>
       <div class="image-wrap">
-        <div class="book-cover-frame"${coverTintAttr}>
+        <div class="book-cover-frame">
           ${coverImg}${coverFallback}
         </div>
         ${shareBtn}
