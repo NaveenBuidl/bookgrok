@@ -15,7 +15,7 @@
   /* Card text colors — exactly two. Every secondary/muted line on the card
      uses --card-text-muted, no exceptions carved out per-element. */
   --card-text-primary: #172033;
-  --card-text-muted: #6b7280;
+  --card-text-muted: #5b6472;
 
   --motion-duration-cover: 240ms;
   --motion-duration-stagger-step: 40ms;
@@ -116,7 +116,7 @@ html {
 .site-header--access { padding-bottom: 16px; }
 .back-link {
   display: inline-block; margin-bottom: 20px; font-size: 13px;
-  font-weight: 700; color: #6b7280; text-decoration: none;
+  font-weight: 700; color: #5b6472; text-decoration: none;
 }
 .back-link:hover { color: #172033; }
 .access-title {
@@ -124,7 +124,7 @@ html {
   letter-spacing: -0.02em; font-weight: 800;
 }
 .access-book-subtitle { margin: 0 0 6px; font-size: 15px; color: #4b5563; }
-.access-subtitle { margin: 0; font-size: 14px; color: #6b7280; }
+.access-subtitle { margin: 0; font-size: 14px; color: #5b6472; }
 
 /* Main */
 
@@ -534,13 +534,13 @@ html {
 
 .community-block { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .community-platform { font-weight: 700; font-size: 14px; color: #172033; }
-.community-channel { font-size: 13px; color: #6b7280; background: #f3ede4; border-radius: 5px; padding: 2px 8px; }
-.community-instructions { margin: 6px 0 0; font-size: 13px; color: #6b7280; width: 100%; }
+.community-channel { font-size: 13px; color: #5b6472; background: #f3ede4; border-radius: 5px; padding: 2px 8px; }
+.community-instructions { margin: 6px 0 0; font-size: 13px; color: #5b6472; width: 100%; }
 
 /* States */
 
 .loading-state, .empty-state, .error-state {
-  padding: 40px 0; font-size: 15px; color: #6b7280; text-align: center;
+  padding: 40px 0; font-size: 15px; color: #5b6472; text-align: center;
 }
 .error-state { color: #b91c1c; }
 .error-state small { display: block; margin-top: 6px; font-size: 12px; color: #9ca3af; }
@@ -574,7 +574,7 @@ html {
   }
   .col-session { font-size: 13px; color: #9ca3af; font-weight: 700; }
   .col-chapters { font-size: 14px; color: #172033; font-weight: 600; }
-  .col-datetime { font-size: 13px; color: #6b7280; }
+  .col-datetime { font-size: 13px; color: #5b6472; }
   .col-actions {
     flex-direction: row;
     flex-wrap: wrap;
@@ -652,7 +652,7 @@ html {
 .search-empty-sub {
   margin: 0;
   font-size: 14px;
-  color: #6b7280;
+  color: #5b6472;
 }
 
 .search-empty-sub a {
@@ -721,7 +721,7 @@ html {
   text-decoration: none;
   white-space: nowrap;
   background: transparent;
-  color: #6b7280;
+  color: #5b6472;
   border: 1.5px solid #e2d9cc;
 }
 
