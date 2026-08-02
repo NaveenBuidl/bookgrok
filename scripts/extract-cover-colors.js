@@ -2,9 +2,19 @@
 /**
  * scripts/extract-cover-colors.js
  *
- * Extracts a dominant color per book cover from the live tracks CSV, clamped
- * to safe bounds for use as a 3px card border / spine-emboss tint / low-alpha
- * radial gradient (src/app.js already reads track.coverTint into --cover-tint).
+ * Extracts a dominant color per book cover from the live tracks CSV and
+ * NORMALIZES it in OKLCH to a fixed lightness and chroma, preserving only hue,
+ * for use as a 3px card border / spine-emboss tint / panel wash (src/app.js
+ * already reads track.coverTint into --cover-tint).
+ *
+ * Why normalize rather than clamp: raw extracted swatches varied ~3.9x in OKLCH
+ * chroma (0.044 to 0.172) and across 0.47-0.85 lightness. No single CSS effect
+ * strength can serve that spread — a strength where the near-neutral covers are
+ * still invisible has already tipped the saturated ones into a colored panel.
+ * Removing the variance at the source is what lets one strength serve the whole
+ * library. Same principle as Material You: the seed contributes hue, chroma is a
+ * fixed constant per role. Fidelity to the cover's literal color is explicitly
+ * NOT a goal here; shelf coherence is.
  *
  * Runs in Node (not the browser) specifically because CORS blocks canvas
  * pixel-sampling of m.media-amazon.com images client-side; a Node fetch has
@@ -31,10 +41,32 @@ const GITIGNORE = path.join(REPO_ROOT, ".gitignore");
 const CONFIG_SRC = fs.readFileSync(path.join(REPO_ROOT, "src", "config.js"), "utf8");
 const TRACKS_CSV_URL = (CONFIG_SRC.match(/tracksCsvUrl:\s*["']([^"']+)["']/) || [])[1];
 
-const LIGHTNESS_MIN = 0.30;
-const LIGHTNESS_MAX = 0.62;
-const SATURATION_MIN = 0.15;
-const SATURATION_MAX = 0.55;
+// --- OKLCH normalization targets -------------------------------------------
+// Every surviving swatch is rewritten to exactly this lightness and chroma; only
+// its hue carries through from the cover.
+//
+// TARGET_L 0.62: dark enough to separate from the cream panel it washes over
+// (#ede5d8 is L~0.92) while staying light enough that the 3px left rule doesn't
+// read as a black bar on white.
+//
+// TARGET_C 0.075: the median of the measured live spread, so normalization pulls
+// the four hot reds down further than it pushes the near-neutrals up — no hue has
+// to travel far. Also comfortably inside the sRGB gamut at EVERY hue: the binding
+// constraint is cyan (~200 deg), which caps at C~0.105 at this lightness, so 0.075
+// leaves headroom and no hue silently clips (clipping would shift hue, which is
+// the one property we are trying to preserve).
+const TARGET_L = 0.62;
+const TARGET_C = 0.075;
+
+// Minimum chroma for a cover to be considered to HAVE a hue at all. Below this,
+// the extracted swatch is essentially achromatic and its hue angle is sampling
+// noise — normalizing it would invent a color out of nothing, so these are gated
+// out entirely and render as the untinted neutral instead.
+//
+// 0.020 is the OKLCH analogue of Material You's CAM16 chroma >= 5 threshold. It
+// also matches direct observation: near-grey probes are indistinguishable from
+// #808080 at C~0.011, while a warm cast becomes legible by C~0.023.
+const MIN_CHROMA = 0.020;
 
 function ensureGitignored() {
   const entry = "cover-colors.csv";
@@ -137,83 +169,108 @@ function preferNonWebp(url) {
   return url.replace(/FMwebp_(?=\.[a-zA-Z]+$)/, "");
 }
 
-function rgbToHsl(r, g, b) {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h, s, l = (max + min) / 2;
-  if (max === min) { h = s = 0; }
-  else {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      default: h = (r - g) / d + 4; break;
+// --- sRGB <-> OKLCH ---------------------------------------------------------
+// Björn Ottosson's reference OKLab implementation (bottosson.github.io/posts/oklab).
+// Inlined rather than pulled from a package: this stays a zero-runtime-dependency
+// local script, and the transform is ~30 lines.
+
+function srgbToLinear(c) {
+  c /= 255;
+  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+
+function linearToSrgb(c) {
+  return c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+}
+
+function rgbToOklch(r, g, b) {
+  const lr = srgbToLinear(r), lg = srgbToLinear(g), lb = srgbToLinear(b);
+  const l = Math.cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb);
+  const m = Math.cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb);
+  const s = Math.cbrt(0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb);
+  const L = 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s;
+  const a = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s;
+  const bb = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s;
+  let h = Math.atan2(bb, a) * 180 / Math.PI;
+  if (h < 0) h += 360;
+  return [L, Math.sqrt(a * a + bb * bb), h];
+}
+
+function oklchToLinearRgb(L, C, h) {
+  const a = C * Math.cos(h * Math.PI / 180);
+  const b = C * Math.sin(h * Math.PI / 180);
+  const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+  const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+  const s_ = L - 0.0894841775 * a - 1.2914855480 * b;
+  const l = l_ * l_ * l_, m = m_ * m_ * m_, s = s_ * s_ * s_;
+  return [
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s,
+  ];
+}
+
+function inGamut(L, C, h) {
+  return oklchToLinearRgb(L, C, h).map(linearToSrgb)
+    .every(v => v >= -0.0005 && v <= 1.0005);
+}
+
+// TARGET_C is chosen to be in-gamut at every hue, so this binary search is a
+// belt-and-braces guard rather than a routine code path. It reduces chroma (never
+// lightness, never hue) if a value somehow lands outside sRGB, because hue is the
+// one channel that must survive — naive per-channel clipping would shift it.
+function oklchToHex(L, C, h) {
+  let c = C;
+  if (!inGamut(L, c, h)) {
+    let lo = 0, hi = c;
+    for (let i = 0; i < 32; i++) {
+      const mid = (lo + hi) / 2;
+      if (inGamut(L, mid, h)) lo = mid; else hi = mid;
     }
-    h /= 6;
+    c = lo;
   }
-  return [h, s, l];
+  const rgb = oklchToLinearRgb(L, c, h).map(linearToSrgb)
+    .map(v => Math.max(0, Math.min(255, Math.round(v * 255))));
+  return "#" + rgb.map(v => v.toString(16).padStart(2, "0")).join("");
 }
 
-function hue2rgb(p, q, t) {
-  if (t < 0) t += 1;
-  if (t > 1) t -= 1;
-  if (t < 1 / 6) return p + (q - p) * 6 * t;
-  if (t < 1 / 2) return q;
-  if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-  return p;
+// Rewrite a swatch to the fixed target lightness/chroma, keeping only its hue.
+// Returns null for swatches too achromatic to have a meaningful hue (see
+// MIN_CHROMA) — the caller emits an empty coverTint for those, so the card falls
+// back to its untinted neutral rendering.
+function normalizeSwatch(rgb) {
+  const [, chroma, hue] = rgbToOklch(rgb[0], rgb[1], rgb[2]);
+  if (chroma < MIN_CHROMA) return null;
+  return oklchToHex(TARGET_L, TARGET_C, hue);
 }
 
-function hslToRgb(h, s, l) {
-  let r, g, b;
-  if (s === 0) { r = g = b = l; }
-  else {
-    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-    const p = 2 * l - q;
-    r = hue2rgb(p, q, h + 1 / 3);
-    g = hue2rgb(p, q, h);
-    b = hue2rgb(p, q, h - 1 / 3);
-  }
-  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
-}
-
-function toHex(r, g, b) {
-  return "#" + [r, g, b].map(v => Math.max(0, Math.min(255, v)).toString(16).padStart(2, "0")).join("");
-}
-
-function clamp(v, min, max) { return Math.min(max, Math.max(min, v)); }
-
-// hslToRgb rounds to 8-bit channels, so converting a value clamped to exactly
-// [MIN, MAX] can round-trip to a measured S/L a fraction of a percent outside that
-// range (quantization, not a logic error). Shrink the target range by one 8-bit
-// rounding step (~0.4/255) on each side before clamping, so the post-round value
-// always lands inside the true [MIN, MAX] bounds.
-const ROUNDING_MARGIN = 1 / 255;
-
-// Clamp a swatch's RGB into the fixed lightness/saturation bounds (HSL), hue preserved.
-function clampSwatch(rgb) {
-  const [h, s, l] = rgbToHsl(rgb[0], rgb[1], rgb[2]);
-  const clampedS = clamp(s, SATURATION_MIN + ROUNDING_MARGIN, SATURATION_MAX - ROUNDING_MARGIN);
-  const clampedL = clamp(l, LIGHTNESS_MIN + ROUNDING_MARGIN, LIGHTNESS_MAX - ROUNDING_MARGIN);
-  return toHex(...hslToRgb(h, clampedS, clampedL));
-}
-
+// Pick the swatch whose hue best represents the cover. Since lightness and chroma
+// are now normalized away downstream, the only thing this choice controls is HUE —
+// so it prefers the swatch with the most chromatic signal (highest chroma above the
+// gate), which is the most reliable hue reading, rather than the old "already in the
+// target L/S band" test that existed to minimize how far clamping had to move a color.
 function pickBestSwatch(palette) {
-  // Prefer swatches roughly in the target band already (most faithful to the
-  // actual cover), falling back to whatever has the most pixel population.
-  const candidates = ["Vibrant", "Muted", "DarkVibrant", "LightVibrant", "DarkMuted", "LightMuted"]
+  const candidates = ["Vibrant", "DarkVibrant", "LightVibrant", "Muted", "DarkMuted", "LightMuted"]
     .map(name => palette[name])
     .filter(Boolean);
   if (!candidates.length) return null;
 
-  const inBand = candidates.find(sw => {
-    const [, s, l] = rgbToHsl(...sw.getRgb());
-    return l >= LIGHTNESS_MIN && l <= LIGHTNESS_MAX && s >= SATURATION_MIN && s <= SATURATION_MAX;
+  const scored = candidates.map(sw => {
+    const rgb = sw.getRgb();
+    const [, chroma] = rgbToOklch(rgb[0], rgb[1], rgb[2]);
+    return { rgb, chroma, population: sw.getPopulation() };
   });
-  if (inBand) return inBand.getRgb();
 
-  candidates.sort((a, b) => b.getPopulation() - a.getPopulation());
-  return candidates[0].getRgb();
+  const chromatic = scored.filter(s => s.chroma >= MIN_CHROMA);
+  if (chromatic.length) {
+    chromatic.sort((a, b) => b.chroma - a.chroma);
+    return chromatic[0].rgb;
+  }
+
+  // Every swatch is achromatic — return the most populous so normalizeSwatch can
+  // apply the gate and report it as genuinely neutral.
+  scored.sort((a, b) => b.population - a.population);
+  return scored[0].rgb;
 }
 
 async function extractColor(url) {
@@ -222,7 +279,7 @@ async function extractColor(url) {
   const palette = await Vibrant.from(buffer).getPalette();
   const rgb = pickBestSwatch(palette);
   if (!rgb) throw new Error("no usable swatch in palette");
-  return clampSwatch(rgb);
+  return normalizeSwatch(rgb);
 }
 
 async function main() {
@@ -241,6 +298,7 @@ async function main() {
 
   const results = [];
   const failures = [];
+  const gated = [];
 
   for (const row of rows) {
     const trackId = row.id;
@@ -255,6 +313,14 @@ async function main() {
 
     try {
       const hex = await extractColor(coverUrl);
+      if (hex === null) {
+        // Not a failure: the cover is genuinely achromatic, so it correctly gets
+        // no tint and renders as the untinted neutral.
+        gated.push(trackId);
+        results.push({ trackId, coverTint: "" });
+        console.log(`  ${trackId}: (gated — below MIN_CHROMA, no meaningful hue)`);
+        continue;
+      }
       results.push({ trackId, coverTint: hex });
       console.log(`  ${trackId}: ${hex}`);
     } catch (err) {
@@ -271,7 +337,12 @@ async function main() {
   fs.writeFileSync(OUT_CSV, csvOut);
 
   const succeeded = results.filter(r => r.coverTint).length;
-  console.log(`\n${succeeded}/${results.length} rows produced a color.`);
+  console.log(`\n${succeeded}/${results.length} rows produced a color ` +
+    `(normalized to OKLCH L=${TARGET_L} C=${TARGET_C}, hue preserved).`);
+  if (gated.length) {
+    console.log(`\nGated as achromatic (${gated.length}) — these render untinted by design:`);
+    gated.forEach(id => console.log(`  ${id}`));
+  }
   if (failures.length) {
     console.log(`\nFailed rows (${failures.length}):`);
     failures.forEach(f => console.log(`  ${f.trackId}: ${f.reason}`));
