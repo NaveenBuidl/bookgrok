@@ -205,10 +205,67 @@ html {
    min-height matches the cover's clamp so the panel holds its height before the image
    decodes (reserving space against layout shift) independent of image load or aspect ratio. */
 .image-wrap {
-  position: relative; background: #ede5d8; display: flex;
+  position: relative; background: #eae7e3; display: flex;
   align-items: center; justify-content: center;
   padding: 10px 18px;
   min-height: calc(clamp(330px, 10vw + 290px, 400px) + 20px);
+  /* Contains the wash's stacking context so ::before can never paint over the
+     card body below — the tint stays inside this panel, away from all text. */
+  isolation: isolate;
+}
+/* Cover-tint panel wash — reads as light bouncing off the jacket onto the surface
+   behind it. Two layers, because one gradient cannot do both jobs:
+
+   1. EDGE BAND, anchored in px to this element's real padding (18px horizontal,
+      10px vertical). The cover is centred by flexbox at a fixed aspect-ratio, so
+      the horizontal margin is 18px MINIMUM but grows with viewport — at 1240px
+      it's 18px, at 780px it's ~242px. A percentage stop therefore lands in a
+      different place at every width (17% = 48px at 1240px, i.e. past the cover
+      edge and onto the art; = 123px at 780px, i.e. stranded mid-margin). Pixel
+      anchoring is what keeps this band's peak pinned to the cover edge everywhere.
+
+   2. AMBIENT falloff underneath at ~45% of the band's alpha, percentage-based and
+      spanning the full panel. Percentages are safe HERE precisely because this
+      layer has no sharp peak to drift — it's a broad haze whose job is only to
+      stop wide panels showing a crisp band followed by flat empty ground.
+
+   Alpha 18% was validated across the full normalized hue range (terracotta,
+   olive, teal, slate, rose). It depends on scripts/extract-cover-colors.js
+   normalizing every tint to a fixed OKLCH chroma — at the old ~3.9x chroma
+   spread no single alpha could serve both the muted and saturated covers.
+
+   color-mix's var() fallback resolves to `transparent`, so a card with no
+   --cover-tint (the gated case) paints nothing here and renders as the bare
+   #eae7e3 panel. */
+.image-wrap::before {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(to right,
+      color-mix(in srgb, var(--cover-tint, transparent) 18%, transparent) 0px,
+      color-mix(in srgb, var(--cover-tint, transparent) 18%, transparent) 18px,
+      color-mix(in srgb, var(--cover-tint, transparent) 8.1%, transparent) 43px,
+      transparent 72px,
+      transparent calc(100% - 72px),
+      color-mix(in srgb, var(--cover-tint, transparent) 8.1%, transparent) calc(100% - 43px),
+      color-mix(in srgb, var(--cover-tint, transparent) 18%, transparent) calc(100% - 18px),
+      color-mix(in srgb, var(--cover-tint, transparent) 18%, transparent) 100%),
+    linear-gradient(to right,
+      color-mix(in srgb, var(--cover-tint, transparent) 7.6%, transparent) 0%,
+      color-mix(in srgb, var(--cover-tint, transparent) 4.2%, transparent) 26%,
+      transparent 48%,
+      transparent 52%,
+      color-mix(in srgb, var(--cover-tint, transparent) 4.2%, transparent) 74%,
+      color-mix(in srgb, var(--cover-tint, transparent) 7.6%, transparent) 100%),
+    linear-gradient(to bottom,
+      color-mix(in srgb, var(--cover-tint, transparent) 7.6%, transparent) 0px,
+      color-mix(in srgb, var(--cover-tint, transparent) 12.6%, transparent) 10px,
+      transparent 35px,
+      transparent calc(100% - 35px),
+      color-mix(in srgb, var(--cover-tint, transparent) 12.6%, transparent) calc(100% - 10px),
+      color-mix(in srgb, var(--cover-tint, transparent) 7.6%, transparent) 100%);
+  pointer-events: none;
+  z-index: 0;
 }
 /* Reserved cover box (item 1) — occupies its final footprint (height from the existing
    clamp, width derived from aspect-ratio: 0.65) before the image decodes, so nothing
@@ -225,6 +282,9 @@ html {
    the visible clipping). */
 .book-cover-frame {
   position: relative;
+  /* Above .image-wrap::before (z-index: 0), so the panel wash paints on the surface
+     around the cover and never over the cover art itself. */
+  z-index: 1;
   height: clamp(330px, 10vw + 290px, 400px);
   aspect-ratio: 0.65;
   width: auto;
@@ -287,7 +347,7 @@ html {
    100%/100% of .book-cover-frame, so the frame's left edge IS the image's left edge —
    no dead space to align around. White-stop alphas here are roughly half the reference's
    (0.5/0.6/0.3 -> 0.28/0.32/0.16) since the reference assumes a white page-ground; on our
-   cream #ede5d8 ground the reference alphas blew out too hot. Stop POSITIONS are
+   warm-neutral #eae7e3 panel ground the reference alphas blew out too hot. Stop POSITIONS are
    untouched — those are what create the emboss, not the alpha values. z-index: 1 still
    required — without it this pseudo-element paints below the opaque .book-cover <img>
    sibling and is fully hidden underneath the cover art. */
