@@ -127,3 +127,12 @@ includes line) are a menu, not a stack. Pick one persuasion
 register per card. Populating all of them at once is a misuse,
 not a supported state — the card was not designed to hold all
 six simultaneously without growing materially taller.
+
+## Branching workflow
+- Before any multi-step or visually significant change, create a feature branch first: `git checkout -b <feature-name>`. Never commit directly to main mid-feature.
+- Work and commit on the branch following the existing pattern: leave changes staged, wait for Naveen to review and approve before committing.
+- Push the branch to trigger a Vercel preview deployment: `git push -u origin <feature-name>`.
+- Surface the Vercel preview URL to Naveen (Vercel dashboard → Overview → Active Branches, or Deployments tab) for testing — this is the live deployed render, not localhost.
+- Only merge to main after Naveen confirms the preview is correct: `git checkout main && git merge <feature-name> && git push origin main`.
+- Delete the branch after merging or abandoning: `git branch -d <feature-name>` and `git push origin --delete <feature-name>`.
+- Skip branching for genuine one-line fixes — the existing staged-commit review gate covers those.
