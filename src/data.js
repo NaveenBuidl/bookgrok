@@ -74,6 +74,15 @@ async function loadData() {
       return aOrder - bOrder;
     });
 
+  if (rawTracks.length > 0 && tracks.length === 0) {
+    const rowsWithId = rawTracks.filter(r => r.id).length;
+    if (rowsWithId === 0) {
+      console.error(`[BookGrok] tracks CSV returned ${rawTracks.length} rows but none have an "id" column — response may not be valid CSV (HTML error page?). Check Sheet publish settings.`);
+    } else {
+      console.warn(`[BookGrok] tracks CSV has ${rowsWithId} rows with ids but 0 are published — all tracks may be set to draft or archived.`);
+    }
+  }
+
   const sessions = rawSessions
     .filter(s => s.trackId && s.status === "published")
     .sort((a, b) => {

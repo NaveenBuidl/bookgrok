@@ -154,7 +154,7 @@ function buildTrackCard(track, sessions, isPriority) {
   const coverSrcset = coverHasImg && cover2x !== cover1x ? ` srcset="${cover1x} 1x, ${cover2x} 2x" sizes="(max-width: 480px) 90vw, 260px"` : "";
   const coverTintAttr = track.coverTint && track.coverTint.trim() ? ` style="--cover-tint: ${escapeHtml(track.coverTint.trim())}"` : "";
   const coverImg = coverHasImg
-    ? `<img class="book-cover" src="${cover1x}"${coverSrcset} alt="" loading="lazy" decoding="async"${priorityAttrs} onload="applyCoverFitThreshold(this);this.classList.add('is-loaded')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    ? `<img class="book-cover" src="${cover1x}"${coverSrcset} alt="" loading="${isPriority ? 'eager' : 'lazy'}" decoding="async"${priorityAttrs} onload="applyCoverFitThreshold(this);this.classList.add('is-loaded')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
     : "";
   const coverFallback = `<div class="book-cover-fallback" style="${coverHasImg ? 'display:none' : ''}">${escapeHtml((track.title || "?").charAt(0))}</div>`;
 
