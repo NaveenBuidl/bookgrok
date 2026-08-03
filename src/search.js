@@ -51,7 +51,7 @@ function renderSearchResults(matches, q) {
 
   if (matches.length === 0) {
     const requestUrl = (typeof CONFIG !== "undefined" && CONFIG.requestBookUrl) || "#";
-    const requestLink = isValidUrl(requestUrl)
+    const requestLink = isValidUrl(requestUrl) && !requestUrl.includes("REPLACE")
       ? `<a href="${requestUrl}" target="_blank" rel="noopener">request this book</a>`
       : `request this book`;
     main.innerHTML = `
