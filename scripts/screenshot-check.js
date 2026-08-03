@@ -110,10 +110,12 @@ async function main() {
       });
 
       try {
-        await page.goto(targetUrl, { waitUntil: 'networkidle', timeout: 15000 });
+        await page.goto(targetUrl, { waitUntil: 'networkidle', timeout: 30000 });
         // Give client-side data fetches (PapaParse/gviz CSV) a moment past
         // networkidle — they can resolve just after the network goes quiet.
         await page.waitForTimeout(500);
+        // Wait for cards to render. On cold CSV loads, this can exceed the old 15s.
+        await page.waitForSelector('.card, .error-state', { timeout: 25000 });
       } catch (err) {
         console.error(`  Failed to load ${targetUrl} at ${vp.name}: ${err.message}`);
         await page.close();
