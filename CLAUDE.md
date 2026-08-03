@@ -136,3 +136,39 @@ six simultaneously without growing materially taller.
 - Only merge to main after Naveen confirms the preview is correct: `git checkout main && git merge <feature-name> && git push origin main`.
 - Delete the branch after merging or abandoning: `git branch -d <feature-name>` and `git push origin --delete <feature-name>`.
 - Skip branching for genuine one-line fixes — the existing staged-commit review gate covers those.
+
+## Diagnosis discipline
+
+Before proposing a fix or declaring something impossible:
+
+- **State what you're holding fixed.** List the variables you treated as
+  constraints and why each can't move. If a reason is "I assumed it" —
+  that's a candidate to change, not a constraint. Most dead ends are a
+  frozen variable, not a real limit.
+- **Measure before explaining.** If you have a theory for why something
+  behaves as it does, test the theory before acting on it. A plausible
+  mechanism that turns out wrong costs a full round.
+- **Verify geometry against the running page, not the source.** Percentages,
+  flex/grid sizing, and aspect-ratio boxes resolve to different pixel values
+  at different viewports. Read real values (getBoundingClientRect, computed
+  styles) before reasoning about position or size.
+- **When a fix invalidates earlier tests, say so unprompted.** If you find a
+  bug in the test setup, every conclusion drawn with it is suspect. Name
+  which ones.
+
+"This can't be done" is a valid answer, but only in the form:
+*X fails because Y; I tried A, B, C; the untested lever is D.*
+Never as a bare verdict.
+
+## Evaluating visual changes
+
+- Define pass/fail criteria before rendering anything. If a change must
+  satisfy two properties (e.g. an effect is visible AND existing structure
+  survives), test both on every candidate and report both. A candidate
+  passing one and failing the other is not a candidate.
+- Full unzoomed screenshots at real size are the primary evidence. Zoomed
+  crops are a secondary check and never the basis for a verdict — an effect
+  that needs 3x magnification to see doesn't exist at 1x.
+- Test the extremes of the real data (most and least saturated, the gated
+  case), not whichever example is nearest to hand.
+
