@@ -6,7 +6,7 @@ Static prototype for bookgrok.mandava.in. Tests whether the concept resonates �
 
 - Homepage cards show Register + Share only (Buy the book moved to access page)
 - Flat `$9` pricing, no euros
-- `hostLinkedIn` field added (stored, not linked yet)
+- `hostLinkedIn` field added — renders as an icon link in the host block (homepage and access page)
 - Share control (copy URL + mailto) on homepage and access page
 - Homepage split into "Open now" and "Full library"
 - 30 curated dense-nonfiction tracks
@@ -22,6 +22,13 @@ python -m http.server 8000
 
 Test track IDs include: `nexus`, `empire-of-ai`, `the-scaling-era`, `the-coming-wave`, `ai-snake-oil`, `build-llm`, and 24 more in the Full library.
 
+`npm run test` runs plain Node-assert checks (`tests/logic.test.js`) against
+the pure price/seat-math/date-formatting logic — no framework, no new
+dependency. It's runnable on demand only: nothing else in the repo calls it
+(no pre-commit hook, no CI). Wiring it into either is a deliberate later
+decision, not an oversight — revisit once there's a reason to make it a gate
+rather than an opt-in check.
+
 ## File structure
 
 ```
@@ -32,14 +39,38 @@ styles.css              Shared styles
 src/config.js           CSV URLs (absolute paths) + featuredCount
 src/data.js             Fetch, parse, validate
 src/share.js            Share control (copy URL + mailto)
+src/search.js           Homepage search + not-found demand logging
 src/app.js              Homepage render (Open now / Full library)
 src/access.js           Access page render
+tests/logic.test.js     Plain-assert tests for price/seat/date logic (npm run test)
 samples/tracks_sample.csv     30 tracks
 samples/sessions_sample.csv   37 sessions (first 6 tracks)
 docs/bookgrok_v8_4_claudecode_handoff.md
 docs/bookgrok_data_model_v8_4.md
-assets/books, assets/hosts    Image folders
+bookgrok-origin/index.html    Finished draft landing page, predates the bookgrok.io
+                               domain migration and current Newsreader/Inter type
+                               system. Intentionally unlinked — parked pending a
+                               future cleanup pass, not part of the active site.
 ```
+
+### How data actually flows
+
+`index.html` loads scripts in order: PapaParse → `config.js` (sets `CONFIG`,
+the CSV URLs) → `data.js` (defines `loadData()`, which fetches + parses both
+CSVs) → `share.js` → `search.js` → `app.js`. `app.js`'s trailing `init()`
+calls `loadData()`, then `renderHomepage()`, then `initSearch()` and
+`initShareButtons()`.
+
+One non-obvious forward reference: `search.js` loads *before* `app.js` in
+the tag order, and registers its input listener immediately — but that
+listener only *calls* `app.js`'s `renderHomepage()` later, when the user
+types. By then `app.js` has finished loading, so this works, but reading the
+tag order top-to-bottom alone doesn't make the dependency obvious.
+
+`access/index.html` shares the exact same `loadData()` path, but its
+`access.js` calls `renderAccessPage()` instead of `app.js`'s
+`renderHomepage()` — `access.js` never loads `app.js` at all, it has its own
+render functions.
 
 ## Switching to Google Sheets (Stage 2)
 

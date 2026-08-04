@@ -172,3 +172,43 @@ Never as a bare verdict.
 - Test the extremes of the real data (most and least saturated, the gated
   case), not whichever example is nearest to hand.
 
+## Engineering bars (apply to every change, not just this pass)
+
+These are goals to check against, not steps to follow. Judge any change — yours or a
+future engineer's — against these bars. If a change fails one, that's worth raising
+with Naveen before proceeding, not silently working around.
+
+1. **Onboarding cost** — Someone unfamiliar with the repo can tell what a file does
+   and why it exists without reading it end to end or asking. If you add a file,
+   its purpose should be findable in under 30 seconds.
+
+2. **Single source of truth per fact** — Any given fact about the system (a rule, a
+   schema field's behavior, a constraint) lives in exactly one place. Other files
+   defer to it rather than restating it. If you're about to write the same fact in
+   a second place, stop and make it a pointer instead.
+
+3. **Complexity proportional to current scale** — Nothing exists because it "might
+   be needed later." Nothing load-bearing today is left fragile because "it's fine
+   for now." Match effort to what actually matters at this stage, not a future one.
+
+4. **Protect the seams you know will move** — Sheets→backend, and eventually
+   auth/payments, are known future swaps. Code that touches these should not leak
+   implementation details (e.g. CSV-specific shapes) into code that shouldn't care.
+
+5. **Every artifact has a live owner or a recorded decision** — Nothing sits in an
+   ambiguous state. A file is either actively used, or there's a findable, explicit
+   note saying why it's parked. Don't leave "is this dead?" as an open question for
+   the next person to reverse-engineer from git history.
+
+6. **Verifiability matches consequence** — Logic where a silent bug costs real money
+   or trust (pricing, seat counts, access gating) should be checkable by something
+   other than a human eyeballing a screenshot.
+
+7. **Reversibility over polish** — Prefer changes that are cheap to undo if wrong
+   over changes that lock in structure prematurely. If an assumption here breaks in
+   3 months, the blast radius should be small and estimable.
+
+8. **Security/data hygiene never regresses** — Existing guards (escapeHtml,
+   isValidUrl, no raw CSV innerHTML) apply to any new code path touching untrusted
+   data, with no exceptions.
+

@@ -138,12 +138,8 @@ function applyCoverFitThreshold(img) {
   if (cropFraction > COVER_CROP_THRESHOLD) img.classList.add("is-contain");
 }
 
-function buildTrackCard(track, sessions, isPriority) {
-  const firstSession = getFirstSession(sessions, track.id);
-  const startDate = firstSession ? formatLocalDateShort(firstSession.datetimeUTC) : "";
-  const sessionTime = firstSession ? formatLocalTimeOnly(firstSession.datetimeUTC) : "";
-  const sessionTimeTz = firstSession ? formatLocalTimeShort(firstSession.datetimeUTC) : "";
-
+// Cover image markup: <img> (with Amazon srcset rewrite) + initials fallback div.
+function buildCoverMarkup(track, isPriority) {
   const priorityAttrs = isPriority ? ' fetchpriority="high"' : "";
   const coverHasImg = isValidUrl(track.bookCoverUrl);
   const cover1x = coverHasImg ? amazonResizedUrl(track.bookCoverUrl, 400) : "";
@@ -152,38 +148,19 @@ function buildTrackCard(track, sessions, isPriority) {
   // size pattern) — for pass-through URLs (non-Amazon, or an unrecognized Amazon pattern)
   // there's no known 2x variant to offer, so we just serve the single src.
   const coverSrcset = coverHasImg && cover2x !== cover1x ? ` srcset="${cover1x} 1x, ${cover2x} 2x" sizes="(max-width: 480px) 90vw, 260px"` : "";
-  const coverTintAttr = track.coverTint && track.coverTint.trim() ? ` style="--cover-tint: ${escapeHtml(track.coverTint.trim())}"` : "";
   const coverImg = coverHasImg
     ? `<img class="book-cover" src="${cover1x}"${coverSrcset} alt="" loading="${isPriority ? 'eager' : 'lazy'}" decoding="async"${priorityAttrs} onload="applyCoverFitThreshold(this);this.classList.add('is-loaded')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
     : "";
   const coverFallback = `<div class="book-cover-fallback" style="${coverHasImg ? 'display:none' : ''}">${escapeHtml((track.title || "?").charAt(0))}</div>`;
+  return coverImg + coverFallback;
+}
 
+// Host block markup: photo + fallback, name, proof/role line, LinkedIn link.
+function buildHostBlockMarkup(track) {
   const hostImg = isValidUrl(track.hostPhotoUrl)
     ? `<img class="host-photo" src="${track.hostPhotoUrl}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
     : "";
   const hostImgFallback = `<div class="host-photo-fallback" style="${isValidUrl(track.hostPhotoUrl) ? 'display:none' : ''}">${escapeHtml((track.host || "?").charAt(0))}</div>`;
-
-  const spotsTotalNum = parseInt(track.spotsTotal, 10);
-  const spotsLeftNum = parseInt(track.spotsLeft, 10);
-  const hasSpots = track.spotsLeft !== "" && track.spotsLeft != null && track.spotsTotal !== "" && track.spotsTotal != null
-    && Number.isInteger(spotsTotalNum) && spotsTotalNum > 0
-    && Number.isInteger(spotsLeftNum) && spotsLeftNum >= 0 && spotsLeftNum <= spotsTotalNum;
-  const isSoldOut = hasSpots && spotsLeftNum === 0;
-
-  const registerBtn = isSoldOut
-    ? `<span class="btn-primary btn-join-cohort btn-sold-out" aria-disabled="true">Cohort full</span>`
-    : (isValidUrl(track.formUrl)
-      ? `<a class="btn-primary btn-join-cohort" href="${track.formUrl}" target="_blank" rel="noopener">Join this cohort</a>`
-      : "");
-
-  const shareIcon = `<svg class="share-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>`;
-  const shareBtn = `<button class="btn-share btn-share-card" type="button" data-share-track="${escapeHtml(track.id)}" aria-label="Share">${shareIcon}</button>`;
-
-  const category = track.category
-    ? `<p class="track-category">${escapeHtml(track.category)}</p>` : "";
-
-  const author = track.author
-    ? `<p class="track-author">${escapeHtml(track.author)}</p>` : "";
 
   const hostName = track.host
     ? `<p class="host-name"><span class="host-name-label">Hosted by</span> ${escapeHtml(track.host)}</p>` : "";
@@ -214,6 +191,52 @@ function buildTrackCard(track, sessions, isPriority) {
   const hostProof = proofLines.length
     ? `<div class="host-proof">${proofLines.map(l => `<p class="host-proof-line">${escapeHtml(l)}</p>`).join("")}</div>`
     : (track.hostRole ? `<p class="host-role">${escapeHtml(track.hostRole)}</p>` : "");
+
+  return hostImg + hostImgFallback + `<div class="host-text">${hostName}${hostProof}${linkedInBtn}</div>`;
+}
+
+// Pure seat-state derivation: whether spotsLeft/spotsTotal are usable, and sold-out status.
+function computeSeatState(track) {
+  const spotsTotalNum = parseInt(track.spotsTotal, 10);
+  const spotsLeftNum = parseInt(track.spotsLeft, 10);
+  const hasSpots = track.spotsLeft !== "" && track.spotsLeft != null && track.spotsTotal !== "" && track.spotsTotal != null
+    && Number.isInteger(spotsTotalNum) && spotsTotalNum > 0
+    && Number.isInteger(spotsLeftNum) && spotsLeftNum >= 0 && spotsLeftNum <= spotsTotalNum;
+  const isSoldOut = hasSpots && spotsLeftNum === 0;
+  return { hasSpots, isSoldOut, spotsLeftNum, spotsTotalNum };
+}
+
+// Pure price-display derivation: total text + per-week breakdown text.
+// price is stored as "$9" (see CLAUDE.md: flat $9 everywhere) — strip a leading currency
+// symbol before parsing so the per-week derivation actually runs instead of silently NaN-ing.
+function computePriceDisplay(track) {
+  const priceNum = parseFloat(String(track.price || "").replace(/^[^\d.-]+/, ""));
+  const isPricedFree = !track.price || !track.price.trim() || (!isNaN(priceNum) && priceNum === 0);
+  const sessionCountNum = parseInt(track.sessionCount, 10);
+  let priceTotalText, priceUnitText;
+  if (isPricedFree) {
+    priceTotalText = "Free";
+    priceUnitText = track.sessionCount ? `${escapeHtml(track.sessionCount)} session${sessionCountNum === 1 ? "" : "s"}` : "";
+  } else {
+    priceTotalText = escapeHtml(track.price);
+    if (!isNaN(priceNum) && Number.isInteger(sessionCountNum) && sessionCountNum > 0) {
+      const perWeek = priceNum / sessionCountNum;
+      const perWeekText = perWeek < 1 ? perWeek.toFixed(2) : (Number.isInteger(perWeek) ? perWeek.toFixed(0) : perWeek.toFixed(2));
+      priceUnitText = `for ${escapeHtml(track.sessionCount)} session${sessionCountNum === 1 ? "" : "s"} · $${perWeekText} a week`;
+    } else if (track.sessionCount) {
+      priceUnitText = `for ${escapeHtml(track.sessionCount)} session${sessionCountNum === 1 ? "" : "s"}`;
+    } else {
+      priceUnitText = "";
+    }
+  }
+  return { priceTotalText, priceUnitText };
+}
+
+// Builds the three "meta" lines (schedule/weekday-time, weeks+start-date, seat dots+scarcity
+// text) plus the price block they sit beside. Needs firstSession/startDate/sessionTime/
+// sessionTimeTz (already derived from sessions data by the caller) and the seat state.
+function buildMetaLines(track, firstSession, startDate, sessionTime, sessionTimeTz, seatState) {
+  const { hasSpots, isSoldOut, spotsLeftNum, spotsTotalNum } = seatState;
 
   // Weekday name from the first session's date (falls back to parsing cadence's "…, <Weekday>s" tail)
   let weekdayPlural = "";
@@ -269,30 +292,9 @@ function buildTrackCard(track, sessions, isPriority) {
     ? `${seatDots}<span class="${seatTextClass}">${seatText}</span>`
     : "";
 
-  // --- Price framing: total + per-week breakdown, right-aligned beside lines 1-2.
-  // price is stored as "$9" (see CLAUDE.md: flat $9 everywhere) — strip a leading currency
-  // symbol before parsing so the per-week derivation actually runs instead of silently NaN-ing.
-  const priceNum = parseFloat(String(track.price || "").replace(/^[^\d.-]+/, ""));
-  const isPricedFree = !track.price || !track.price.trim() || (!isNaN(priceNum) && priceNum === 0);
-  const sessionCountNum = parseInt(track.sessionCount, 10);
-  let priceTotalText, priceUnitText;
-  if (isPricedFree) {
-    priceTotalText = "Free";
-    priceUnitText = track.sessionCount ? `${escapeHtml(track.sessionCount)} session${sessionCountNum === 1 ? "" : "s"}` : "";
-  } else {
-    priceTotalText = escapeHtml(track.price);
-    if (!isNaN(priceNum) && Number.isInteger(sessionCountNum) && sessionCountNum > 0) {
-      const perWeek = priceNum / sessionCountNum;
-      const perWeekText = perWeek < 1 ? perWeek.toFixed(2) : (Number.isInteger(perWeek) ? perWeek.toFixed(0) : perWeek.toFixed(2));
-      priceUnitText = `for ${escapeHtml(track.sessionCount)} session${sessionCountNum === 1 ? "" : "s"} · $${perWeekText} a week`;
-    } else if (track.sessionCount) {
-      priceUnitText = `for ${escapeHtml(track.sessionCount)} session${sessionCountNum === 1 ? "" : "s"}`;
-    } else {
-      priceUnitText = "";
-    }
-  }
+  const { priceTotalText, priceUnitText } = computePriceDisplay(track);
 
-  const metaBlock = `<div class="schedule-price-row">
+  return `<div class="schedule-price-row">
     <div class="meta-lines">
       ${metaLine1Html ? `<p class="track-schedule meta-line-1">${metaLine1Html}</p>` : ""}
       ${metaLine2 ? `<p class="track-schedule">${metaLine2}</p>` : ""}
@@ -303,8 +305,11 @@ function buildTrackCard(track, sessions, isPriority) {
       ${priceUnitText ? `<p class="price-unit">${priceUnitText}</p>` : ""}
     </div>
   </div>`;
+}
 
-  // Commitment microcopy — derived only from explicit Sheet fields, never guessed.
+// Commitment microcopy + includes line — both optional, derived only from explicit Sheet
+// fields, never guessed.
+function buildCommitmentAndIncludes(track) {
   const commitmentParts = [];
   if (track.sessionMinutes && !isNaN(parseInt(track.sessionMinutes, 10))) {
     commitmentParts.push(`~${parseInt(track.sessionMinutes, 10)} min live weekly`);
@@ -320,11 +325,43 @@ function buildTrackCard(track, sessions, isPriority) {
     ? `<p class="includes-line">${track.includes.split("|").map(s => escapeHtml(s.trim())).filter(Boolean).join(" · ")}</p>`
     : "";
 
+  return commitmentLine + includesLine;
+}
+
+function buildTrackCard(track, sessions, isPriority) {
+  const firstSession = getFirstSession(sessions, track.id);
+  const startDate = firstSession ? formatLocalDateShort(firstSession.datetimeUTC) : "";
+  const sessionTime = firstSession ? formatLocalTimeOnly(firstSession.datetimeUTC) : "";
+  const sessionTimeTz = firstSession ? formatLocalTimeShort(firstSession.datetimeUTC) : "";
+
+  const coverTintAttr = track.coverTint && track.coverTint.trim() ? ` style="--cover-tint: ${escapeHtml(track.coverTint.trim())}"` : "";
+  const coverMarkup = buildCoverMarkup(track, isPriority);
+  const hostBlockMarkup = buildHostBlockMarkup(track);
+
+  const seatState = computeSeatState(track);
+  const registerBtn = seatState.isSoldOut
+    ? `<span class="btn-primary btn-join-cohort btn-sold-out" aria-disabled="true">Cohort full</span>`
+    : (isValidUrl(track.formUrl)
+      ? `<a class="btn-primary btn-join-cohort" href="${track.formUrl}" target="_blank" rel="noopener">Join this cohort</a>`
+      : "");
+
+  const shareIcon = `<svg class="share-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>`;
+  const shareBtn = `<button class="btn-share btn-share-card" type="button" data-share-track="${escapeHtml(track.id)}" aria-label="Share">${shareIcon}</button>`;
+
+  const category = track.category
+    ? `<p class="track-category">${escapeHtml(track.category)}</p>` : "";
+
+  const author = track.author
+    ? `<p class="track-author">${escapeHtml(track.author)}</p>` : "";
+
+  const metaBlock = buildMetaLines(track, firstSession, startDate, sessionTime, sessionTimeTz, seatState);
+  const commitmentAndIncludes = buildCommitmentAndIncludes(track);
+
   return `
     <article class="card" id="track-${escapeHtml(track.id)}"${coverTintAttr}>
       <div class="image-wrap">
         <div class="book-cover-frame">
-          ${coverImg}${coverFallback}
+          ${coverMarkup}
         </div>
         ${shareBtn}
       </div>
@@ -335,17 +372,11 @@ function buildTrackCard(track, sessions, isPriority) {
           ${author}
         </div>
         <div class="host-block">
-          ${hostImg}${hostImgFallback}
-          <div class="host-text">
-            ${hostName}
-            ${hostProof}
-            ${linkedInBtn}
-          </div>
+          ${hostBlockMarkup}
         </div>
         ${metaBlock}
         ${registerBtn}
-        ${commitmentLine}
-        ${includesLine}
+        ${commitmentAndIncludes}
         <a class="session-preview-link" href="/access/?track=${escapeHtml(track.id)}&preview=1">Preview the sessions</a>
       </div>
     </article>

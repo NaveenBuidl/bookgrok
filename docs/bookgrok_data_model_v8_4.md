@@ -32,7 +32,7 @@ A single complete book offered as a structured reading cohort. The central objec
 | category | string | yes | Thematic shelf (e.g. Technology & Society, Philosophy). |
 | host | string | yes | Host display name. |
 | hostRole | string | yes | One-line host credential. |
-| hostLinkedIn | url | no | Host LinkedIn profile. Stored now, not linked in v8.4 (feature-flagged for later). |
+| hostLinkedIn | url | no | Host LinkedIn profile. Rendered as an icon link in the card's host block (homepage and access page) — part of the host trust signal. |
 | spotsLeft | integer | yes | Remaining capacity. Manually maintained. |
 | spotsTotal | integer | yes | Cohort cap (typically 8). |
 | sessionCount | integer | yes | Number of sessions in the track. |
@@ -146,7 +146,7 @@ The model enforces a public/gated split. Some fields must never reach the public
 |---|---|---|
 | title, author, category | ✅ | ✅ |
 | host, hostRole, hostPhotoUrl | ✅ | ✅ |
-| hostLinkedIn | stored, not rendered | stored, not rendered |
+| hostLinkedIn | ✅ (icon link) | ✅ (icon link) |
 | sessionCount, cadence, startDate | ✅ | ✅ |
 | spotsLeft, spotsTotal, price | ✅ | — |
 | bookCoverUrl | ✅ | ✅ |

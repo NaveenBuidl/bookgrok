@@ -1,5 +1,8 @@
 # BookGrok Prototype v8.4 — Claude Code Handoff
 
+This spec reflects the original v8.4 build plan. Where it and CLAUDE.md
+disagree on a rule, CLAUDE.md governs — it's the living source.
+
 ## 0. Version summary
 
 **Version:** v8.4
@@ -10,7 +13,7 @@
 
 1. **Homepage cards: Register only.** "Buy the book" removed from homepage cards. It remains on the access page (post-registration is the right moment to nudge purchase).
 2. **Pricing: flat `$9`, no euros, anywhere.** This is mock pricing to make the gate feel real — not the eventual price.
-3. **Host name → LinkedIn (feature-flagged).** New `hostLinkedIn` field in the schema. Stored but NOT rendered as a link in v8.4. Reserved for a later version. Do not build the link behavior now.
+3. **Host name → LinkedIn.** New `hostLinkedIn` field in the schema, rendered as an icon link in the card's host block (homepage and access page) — part of the host trust signal.
 4. **Share-with-colleague feature.** A "Share" control on both homepage cards and the access page. Copies the track URL to clipboard (and offers a prefilled mailto). This serves BookGrok's anti-isolation DNA — bring a peer.
 5. **Book curation: 30 dense, serious, long-form nonfiction titles.** The anti-book-club. Books people buy and abandon. Mix of recent-popular (2023–2025) and Lindy (time-tested). See `samples/tracks_sample.csv`.
 6. **Homepage structure: "Open now" + "Full library".** With 30 tracks, the homepage features a small set at top and lists the rest below, so a first-time visitor grasps the concept before facing the full wall.
@@ -57,7 +60,7 @@ Does a serious reader, seeing this, think: *"Yes — this is how I'd finally get
 
 ### Does not test (deferred)
 
-Real payment, auth, access enforcement, Slack automation, prep visibility, attendance, completion tracking, host LinkedIn links, member identity.
+Real payment, auth, access enforcement, Slack automation, prep visibility, attendance, completion tracking, member identity.
 
 ---
 
@@ -110,7 +113,7 @@ Access gating is simulated by URL obscurity. Not secure. Acceptable for the mock
 
 ### Homepage — NEVER render
 
-Meet links · calendar links · homework URLs · Slack links · access page URL · "Buy the book" · `hostLinkedIn` link.
+Meet links · calendar links · homework URLs · Slack links · access page URL · "Buy the book".
 
 ### Share control behavior
 
@@ -137,7 +140,7 @@ URL: `/access/?track=TRACK-ID`. Read `track` from query string, match to Track `
 1. Back link `← All tracks` → `/`
 2. Access notice: `You are registered. Bookmark this page.`
 3. Title, author, category
-4. Host name + role (no LinkedIn link in v8.4)
+4. Host name + role + LinkedIn icon link (if `hostLinkedIn` set)
 5. **Buy the book** (if `buyBookUrl`)
 6. **Share** control (same behavior as homepage, shares the public track URL)
 7. Session table (published sessions, ordered by `number`):

@@ -57,6 +57,11 @@ async function fetchCsv(url) {
   }
 }
 
+// loadData() returning {tracks, sessions} as plain arrays of plain objects is the seam
+// where the CSV source gets swapped for a real backend API later — nothing downstream
+// of this function (app.js, access.js, search.js, share.js) should assume CSV-specific
+// shape (string-typed fields, PapaParse quirks, etc). Anything CSV-specific belongs
+// above this line; everything below the return should read as "just JS objects."
 async function loadData() {
   const [rawTracks, rawSessions] = await Promise.all([
     fetchCsv(CONFIG.tracksCsvUrl),
@@ -74,6 +79,12 @@ async function loadData() {
       return aOrder - bOrder;
     });
 
+  // Known gap (was docs/latency-audit-2026-08-03.md Fix 5, now recorded here instead of
+  // in that now-deleted doc): this only logs to console. A CSV response that's silently
+  // broken (e.g. an HTML error page where valid CSV was expected) renders to readers as
+  // a generic "No tracks available right now" empty state, not a visible error — there's
+  // no throw, so the error-state UI in app.js/access.js never triggers from this path.
+  // Deliberately out of scope to fix here; revisit if this needs to surface to the operator.
   if (rawTracks.length > 0 && tracks.length === 0) {
     const rowsWithId = rawTracks.filter(r => r.id).length;
     if (rowsWithId === 0) {

@@ -6,6 +6,7 @@
   "scripts": {
     "extract-colors": "node scripts/extract-cover-colors.js",
     "screenshot": "node scripts/screenshot-check.js",
-    "smoke": "node scripts/smoke-test.js"
+    "smoke": "node scripts/smoke-test.js",
+    "test": "node tests/logic.test.js"
   }
 }

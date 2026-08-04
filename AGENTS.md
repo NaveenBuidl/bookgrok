@@ -1,12 +1,15 @@
 # BookGrok Mock v8.4 — Agent Instructions (mirror of CLAUDE.md)
 
+This file mirrors CLAUDE.md. If the two ever disagree, CLAUDE.md is correct —
+treat that as a bug in this file.
+
 Read docs/bookgrok_v8_4_claudecode_handoff.md and docs/bookgrok_data_model_v8_4.md before writing any code.
 
 ## What v8.4 changes from v8.3
 
 - Homepage cards: Register + Share only. NO "Buy the book" on homepage (it stays on access page).
 - Pricing: flat `$9` everywhere. No euros.
-- New `hostLinkedIn` field: stored, NOT rendered as a link in v8.4 (feature-flagged).
+- `hostLinkedIn` field: rendered as an icon link in the homepage card's host block (and access page). The host's verifiable identity is part of the card's trust signal.
 - New Share control on homepage cards and access page: copies public track URL + mailto. See src/share.js.
 - Homepage splits tracks into "Open now" (first CONFIG.featuredCount) and "Full library" (rest).
 - 30 curated dense-nonfiction tracks in samples/tracks_sample.csv.
@@ -32,7 +35,7 @@ Read docs/bookgrok_v8_4_claudecode_handoff.md and docs/bookgrok_data_model_v8_4.
 
 ## Access gating
 
-- Homepage NEVER shows: Meet links, Calendar links, homework URLs, Slack links, access URL, Buy book, hostLinkedIn link.
+- Homepage NEVER shows: Meet links, Calendar links, homework URLs, Slack links, access URL, Buy book.
 - Access page may show: Join, Calendar, Submit HW, community block, Buy book, Share.
 
 ## Build order

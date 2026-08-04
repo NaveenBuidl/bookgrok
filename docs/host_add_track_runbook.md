@@ -30,7 +30,7 @@ Insert a new row with `status = draft`. Fill in:
 
 - `id` — slug: lowercase, hyphens only, no spaces (e.g. `the-way-of-excellence`). Must be unique and must match the `trackId` you'll use on every session row.
 - `sortOrder` — an integer. Checkpoint: see below — do not reuse a number already in use by another **published** track.
-- `title`, `author`, `category`, `host`, `hostRole`, `hostLinkedIn` (LinkedIn URL is stored but not rendered anywhere in v8.4 — fine to leave blank).
+- `title`, `author`, `category`, `host`, `hostRole`, `hostLinkedIn` (renders as an icon link next to the host's name — fill it in if you want that trust signal on the card; fine to leave blank otherwise).
 - `spotsLeft`, `spotsTotal` — spotsTotal is your cohort cap (typically 8); spotsLeft starts equal to spotsTotal.
 - `sessionCount` — fill this in only after Stage 2 is done (see checkpoint below).
 - `cadence` — human-readable, e.g. `Weekly, Mondays`.
