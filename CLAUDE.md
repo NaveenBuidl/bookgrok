@@ -137,6 +137,16 @@ six simultaneously without growing materially taller.
 - Delete the branch after merging or abandoning: `git branch -d <feature-name>` and `git push origin --delete <feature-name>`.
 - Skip branching for genuine one-line fixes — the existing staged-commit review gate covers those.
 
+## Keep the conceptual map current
+
+README.md has a "Conceptual map" section (subsystems, what's inside each,
+pointers to go deeper) and a "How data actually flows" section. If a change
+adds/removes/moves a file, changes which subsystem owns what, or changes the
+call order described in "How data actually flows," update those sections in
+the same change — don't leave them to drift the way the hostLinkedIn
+rendering claim did across five other files. This is the single place that
+map lives (bar #2) — don't create a second copy of it elsewhere.
+
 ## Diagnosis discipline
 
 Before proposing a fix or declaring something impossible:
