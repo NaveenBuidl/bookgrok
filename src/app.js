@@ -52,12 +52,15 @@ function initCardEntranceObserver() {
   try {
     const cards = document.querySelectorAll(".card:not(.entrance-pending)");
     if (!cards.length) return;
+    const staggerStep = parseInt(
+      getComputedStyle(document.documentElement)
+        .getPropertyValue("--motion-duration-stagger-step"), 10) || 0;
     const io = new IntersectionObserver((entries, observer) => {
       let batchIndex = 0;
       entries.forEach(entry => {
         if (!entry.isIntersecting) return;
         const el = entry.target;
-        el.style.transitionDelay = `${batchIndex * 40}ms`;
+        el.style.transitionDelay = `${batchIndex * staggerStep}ms`;
         el.classList.add("is-visible");
         observer.unobserve(el);
         batchIndex++;
