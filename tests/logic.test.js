@@ -98,26 +98,15 @@ test("computeSeatState: spotsLeft greater than spotsTotal is rejected", () => {
 
 // --- computePriceDisplay -----------------------------------------------
 
-test("computePriceDisplay: flat $9 with even per-week split (ai-snake-oil: $9/6 sessions)", () => {
+test("computePriceDisplay: flat $9 renders total only, no per-week breakdown", () => {
   const p = computePriceDisplay({ price: "$9", sessionCount: "6" });
   assert.equal(p.priceTotalText, "$9");
-  assert.equal(p.priceUnitText, "for 6 sessions · $1.50 a week");
+  assert.equal(p.priceUnitText, "");
 });
 
-test("computePriceDisplay: integer per-week split", () => {
-  const p = computePriceDisplay({ price: "$9", sessionCount: "3" });
-  assert.equal(p.priceUnitText, "for 3 sessions · $3 a week");
-});
-
-test("computePriceDisplay: blank price renders as Free", () => {
+test("computePriceDisplay: blank price renders as Free with no sub-line", () => {
   const p = computePriceDisplay({ price: "", sessionCount: "6" });
   assert.equal(p.priceTotalText, "Free");
-  assert.equal(p.priceUnitText, "6 sessions");
-});
-
-test("computePriceDisplay: missing sessionCount omits per-week text", () => {
-  const p = computePriceDisplay({ price: "$9", sessionCount: "" });
-  assert.equal(p.priceTotalText, "$9");
   assert.equal(p.priceUnitText, "");
 });
 

@@ -215,24 +215,8 @@ function computeSeatState(track) {
 function computePriceDisplay(track) {
   const priceNum = parseFloat(String(track.price || "").replace(/^[^\d.-]+/, ""));
   const isPricedFree = !track.price || !track.price.trim() || (!isNaN(priceNum) && priceNum === 0);
-  const sessionCountNum = parseInt(track.sessionCount, 10);
-  let priceTotalText, priceUnitText;
-  if (isPricedFree) {
-    priceTotalText = "Free";
-    priceUnitText = track.sessionCount ? `${escapeHtml(track.sessionCount)} session${sessionCountNum === 1 ? "" : "s"}` : "";
-  } else {
-    priceTotalText = escapeHtml(track.price);
-    if (!isNaN(priceNum) && Number.isInteger(sessionCountNum) && sessionCountNum > 0) {
-      const perWeek = priceNum / sessionCountNum;
-      const perWeekText = perWeek < 1 ? perWeek.toFixed(2) : (Number.isInteger(perWeek) ? perWeek.toFixed(0) : perWeek.toFixed(2));
-      priceUnitText = `for ${escapeHtml(track.sessionCount)} session${sessionCountNum === 1 ? "" : "s"} · $${perWeekText} a week`;
-    } else if (track.sessionCount) {
-      priceUnitText = `for ${escapeHtml(track.sessionCount)} session${sessionCountNum === 1 ? "" : "s"}`;
-    } else {
-      priceUnitText = "";
-    }
-  }
-  return { priceTotalText, priceUnitText };
+  const priceTotalText = isPricedFree ? "Free" : escapeHtml(track.price);
+  return { priceTotalText, priceUnitText: "" };
 }
 
 // Builds the three "meta" lines (schedule/weekday-time, weeks+start-date, seat dots+scarcity
@@ -284,12 +268,9 @@ function buildMetaLines(track, firstSession, startDate, sessionTime, sessionTime
   if (isSoldOut) {
     seatText = "Cohort full";
     seatTextClass = "scarcity";
-  } else if (hasSpots && spotsLeftNum <= 2) {
-    seatText = `${escapeHtml(track.spotsLeft)} seat${spotsLeftNum === 1 ? "" : "s"} left of ${escapeHtml(track.spotsTotal)}`;
-    seatTextClass = "scarcity";
   } else if (hasSpots) {
-    seatText = `Capped at ${escapeHtml(track.spotsTotal)} · ${escapeHtml(String(spotsTotalNum - spotsLeftNum))} joined`;
-    seatTextClass = "spots-neutral";
+    seatText = `${escapeHtml(track.spotsLeft)} seat${spotsLeftNum === 1 ? "" : "s"} left of ${escapeHtml(track.spotsTotal)}`;
+    seatTextClass = spotsLeftNum <= 2 ? "scarcity" : "spots-neutral";
   }
   const metaLine3 = hasSpots
     ? `${seatDots}<span class="${seatTextClass}">${seatText}</span>`
